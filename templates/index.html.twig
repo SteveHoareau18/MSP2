@@ -6,10 +6,12 @@
             {{ message }}
         {% endfor %}
     {% endfor %}
+    <button><a href="{{ path('app_logout') }}">Se déconnecter</a></button>
     {% if app.user.verified == false %}
         <p>Vous devez activer votre compte en cliquant sur le lien envoyé par mail ! (no-reply@fresh.app)</p>
         <a href="{{ path('app_resend_registration_confirmation_email') }}">Cliquez pour renvoyer un lien
             d'activation</a>
     {% else %}
+        <h1>Bienvenue {{ user.firstname }}</h1>
     {% endif %}
 {% endblock %}
