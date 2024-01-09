@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fresh ! Frigo {{ refrigerator.name }}{% endblock %}
+
+{% block body %}
+    <h1>Frigo {{ refrigerator.name }}</h1>
+    {% if refrigerator.foods|length == 0 %}
+        <p>Il n'y a pas d'aliment dans ce frigo !</p>
+    {% else %}
+        <h2>Aliments disponibles</h2>
+        {% for food in refrigerator.foods %}
+            <p>{{ food.name }}</p>
+            <p>{{ food.addingDate|date('d/m/Y à H:i') }}</p>
+            <p>{{ food.expireDate|date('d/m/Y') }}</p>
+        {% endfor %}
+    {% endif %}
+    <button><a href="{{ path('app_refrigerator_food_add',{'number':number}) }}">Ajouter un aliment</a></button>
+    <button><a href="{{ path('app_main') }}">Retour</a></button>
+{% endblock %}

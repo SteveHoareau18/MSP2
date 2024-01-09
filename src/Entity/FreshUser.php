@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\FreshUserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -44,6 +46,14 @@ class FreshUser implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastConnection = null;
+
+    #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Refrigerator::class, orphanRemoval: true)]
+    private Collection $refrigerators;
+
+    public function __construct()
+    {
+        $this->refrigerators = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -171,6 +181,36 @@ class FreshUser implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastConnection(\DateTimeInterface $last_connection): static
     {
         $this->lastConnection = $last_connection;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Refrigerator>
+     */
+    public function getRefrigerators(): Collection
+    {
+        return $this->refrigerators;
+    }
+
+    public function addRefrigerator(Refrigerator $refrigerator): static
+    {
+        if (!$this->refrigerators->contains($refrigerator)) {
+            $this->refrigerators->add($refrigerator);
+            $refrigerator->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRefrigerator(Refrigerator $refrigerator): static
+    {
+        if ($this->refrigerators->removeElement($refrigerator)) {
+            // set the owning side to null (unless already changed)
+            if ($refrigerator->getOwner() === $this) {
+                $refrigerator->setOwner(null);
+            }
+        }
 
         return $this;
     }

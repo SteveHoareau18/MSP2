@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fresh ! Nouvel aliment dans le frigo {{ food.refrigerator }}{% endblock %}
+
+{% block body %}
+    {{ form_start(form) }}
+    {{ form_end(form) }}
+    <button><a href="{{ path('app_refrigerator',{'number':number}) }}">Retour</a></button>
+{% endblock %}
