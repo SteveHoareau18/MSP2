@@ -5,11 +5,9 @@ namespace App\Controller;
 use App\Entity\EmailToken;
 use App\Entity\FreshUser;
 use App\Form\RegistrationFormType;
-use App\Repository\FreshUserRepository;
 use App\Security\EmailVerifier;
 use App\Security\MainAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
-use PDOStatement;
 use Symfony\Bridge\Twig\Mime\BodyRenderer;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,8 +19,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
-use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -71,21 +67,13 @@ class RegistrationController extends AbstractController
         ]);
     }
 
-    #[Route('/resend-email/registration', name: 'app_resend_registration_confirmation_email')]
-    public function resendEmailConfirmation(EntityManagerInterface $entityManager){
-        $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$this->getUser()->getUserIdentifier()]);
-        $this->sendEmailVerification($entityManager, $user);
-        $this->addFlash("success","Un mail vous a été envoyé pour activé votre compte");
-        return $this->redirectToRoute("app_main");
-    }
-
-
-    private function sendEmailVerification(EntityManagerInterface $entityManager, FreshUser $user){
+    private function sendEmailVerification(EntityManagerInterface $entityManager, FreshUser $user)
+    {
         $emailToken = new EmailToken();
-        $legacyUser = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$user->getEmail()]);
+        $legacyUser = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $user->getEmail()]);
         //DISABLE ALL VALID TOKENS
         $legacyToken = $entityManager->getConnection()->prepare("CALL disableAllTokenForUser(:userId)");//return one result
-        $legacyToken->executeQuery(["userId"=>$legacyUser->getId()]);
+        $legacyToken->executeQuery(["userId" => $legacyUser->getId()]);
         $entityManager->getConnection()->close();
         //
         $emailToken->setFreshUser($legacyUser);
@@ -93,7 +81,7 @@ class RegistrationController extends AbstractController
         $entityManager->flush();
 
         $legacyToken = $entityManager->getConnection()->prepare("CALL getLastTokenForUser(:userId)");//return one result
-        $legacyToken = $legacyToken->executeQuery(["userId"=>$legacyUser->getId()])->fetchAllAssociative()[0]['token'];
+        $legacyToken = $legacyToken->executeQuery(["userId" => $legacyUser->getId()])->fetchAllAssociative()[0]['token'];
         $entityManager->getConnection()->close();
 
         // generate a signed url and email it to the user
@@ -105,11 +93,20 @@ class RegistrationController extends AbstractController
             ->to($user->getEmail())
             ->subject('Please Confirm your Email')
             ->htmlTemplate('confirmation_email.html.twig')
-            ->context(['url'=> $this->generateUrl('app_verify_email', [], UrlGeneratorInterface::ABSOLUTE_URL),'token'=>$legacyToken]);
+            ->context(['url' => $this->generateUrl('app_verify_email', [], UrlGeneratorInterface::ABSOLUTE_URL), 'token' => $legacyToken]);
         $twigBodyRenderer->render($email);
         $this->emailVerifier->send('app_verify_email', $user,
             $email
         );
+    }
+
+    #[Route('/resend-email/registration', name: 'app_resend_registration_confirmation_email')]
+    public function resendEmailConfirmation(EntityManagerInterface $entityManager)
+    {
+        $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
+        $this->sendEmailVerification($entityManager, $user);
+        $this->addFlash("success", "Un mail vous a été envoyé pour activé votre compte");
+        return $this->redirectToRoute("app_main");
     }
 
     #[Route('/verify/email', name: 'app_verify_email')]
@@ -121,13 +118,13 @@ class RegistrationController extends AbstractController
             return $this->redirectToRoute('app_register');
         }
 
-        $emailToken = $entityManager->getRepository(EmailToken::class)->findOneBy(['token'=>$id]);
+        $emailToken = $entityManager->getRepository(EmailToken::class)->findOneBy(['token' => $id]);
 
         // validate email confirmation link, sets User::isVerified=true and persists
         $isValidToken = $entityManager->getConnection()->prepare("SELECT isTokenValid(:token)");
-        $isValidToken = $isValidToken->executeQuery(["token"=>$id])->fetchAllAssociative();
+        $isValidToken = $isValidToken->executeQuery(["token" => $id])->fetchAllAssociative();
         $entityManager->getConnection()->close();
-        if($isValidToken){
+        if ($isValidToken) {
             $user = $emailToken->getFreshUser();
             // generate a signed url and email it to the user
             $loader = new FilesystemLoader('email-template');

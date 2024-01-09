@@ -8,7 +8,8 @@
     {% endfor %}
     {% if app.user.verified == false %}
         <p>Vous devez activer votre compte en cliquant sur le lien envoyé par mail ! (no-reply@fresh.app)</p>
-        <a href="{{ path('app_resend_registration_confirmation_email') }}">Cliquez pour renvoyer un lien d'activation</a>
+        <a href="{{ path('app_resend_registration_confirmation_email') }}">Cliquez pour renvoyer un lien
+            d'activation</a>
     {% else %}
     {% endif %}
 {% endblock %}

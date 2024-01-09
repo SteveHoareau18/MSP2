@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Repository\EmailTokenRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: EmailTokenRepository::class)]
 class EmailToken
@@ -25,7 +24,7 @@ class EmailToken
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $expireDate = null;
 
-    #[ORM\Column(length: 255,unique: true)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $token = null;
 
     public function getId(): ?int

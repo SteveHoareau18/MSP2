@@ -5,21 +5,19 @@ namespace App\Security;
 use App\Entity\FreshUser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Transport;
-use Symfony\Component\Security\Core\User\UserInterface;
-use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
 
 class EmailVerifier
 {
     public function __construct(
         private VerifyEmailHelperInterface $verifyEmailHelper,
-        private MailerInterface $mailer,
-        private EntityManagerInterface $entityManager
-    ) {
+        private MailerInterface            $mailer,
+        private EntityManagerInterface     $entityManager
+    )
+    {
         $this->mailer = new Mailer(Transport::fromDsn("smtp://" . urlencode($_ENV['SMTP_LOGIN']) . ":" . urlencode($_ENV['SMTP_PASSWORD']) . "@" . urlencode($_ENV['SMTP_ADDRESS']) . ":" . $_ENV['SMTP_PORT']));
     }
 
