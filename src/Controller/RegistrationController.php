@@ -2,12 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\EmailToken;
 use App\Entity\FreshUser;
 use App\Form\RegistrationFormType;
 use App\Repository\FreshUserRepository;
 use App\Security\EmailVerifier;
 use App\Security\MainAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
+use PDOStatement;
+use Symfony\Bridge\Twig\Mime\BodyRenderer;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,17 +18,23 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
 class RegistrationController extends AbstractController
 {
     private EmailVerifier $emailVerifier;
+    private RouterInterface $router;
 
-    public function __construct(EmailVerifier $emailVerifier)
+    public function __construct(EmailVerifier $emailVerifier, RouterInterface $router)
     {
         $this->emailVerifier = $emailVerifier;
+        $this->router = $router;
     }
 
     #[Route('/register', name: 'app_register')]
@@ -47,14 +56,7 @@ class RegistrationController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            // generate a signed url and email it to the user
-            $this->emailVerifier->sendEmailConfirmation('app_verify_email', $user,
-                (new TemplatedEmail())
-                    ->from(new Address('no-reply@fresh.app', 'Fresh Suport !'))
-                    ->to($user->getEmail())
-                    ->subject('Please Confirm your Email')
-                    ->htmlTemplate('registration/confirmation_email.html.twig')
-            );
+            $this->sendEmailVerification($entityManager, $user);
             // do anything else you need here, like send an email
 
             return $userAuthenticator->authenticateUser(
@@ -69,33 +71,87 @@ class RegistrationController extends AbstractController
         ]);
     }
 
+    #[Route('/resend-email/registration', name: 'app_resend_registration_confirmation_email')]
+    public function resendEmailConfirmation(EntityManagerInterface $entityManager){
+        $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$this->getUser()->getUserIdentifier()]);
+        $this->sendEmailVerification($entityManager, $user);
+        $this->addFlash("success","Un mail vous a été envoyé pour activé votre compte");
+        return $this->redirectToRoute("app_main");
+    }
+
+
+    private function sendEmailVerification(EntityManagerInterface $entityManager, FreshUser $user){
+        $emailToken = new EmailToken();
+        $legacyUser = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$user->getEmail()]);
+        //DISABLE ALL VALID TOKENS
+        $legacyToken = $entityManager->getConnection()->prepare("CALL disableAllTokenForUser(:userId)");//return one result
+        $legacyToken->executeQuery(["userId"=>$legacyUser->getId()]);
+        $entityManager->getConnection()->close();
+        //
+        $emailToken->setFreshUser($legacyUser);
+        $entityManager->persist($emailToken);
+        $entityManager->flush();
+
+        $legacyToken = $entityManager->getConnection()->prepare("CALL getLastTokenForUser(:userId)");//return one result
+        $legacyToken = $legacyToken->executeQuery(["userId"=>$legacyUser->getId()])->fetchAllAssociative()[0]['token'];
+        $entityManager->getConnection()->close();
+
+        // generate a signed url and email it to the user
+        $loader = new FilesystemLoader('email-template');
+        $twigEnv = new Environment($loader);
+        $twigBodyRenderer = new BodyRenderer($twigEnv);
+        $email = (new TemplatedEmail())
+            ->from(new Address('no-reply@fresh.app', 'Fresh Support !'))
+            ->to($user->getEmail())
+            ->subject('Please Confirm your Email')
+            ->htmlTemplate('confirmation_email.html.twig')
+            ->context(['url'=> $this->generateUrl('app_verify_email', [], UrlGeneratorInterface::ABSOLUTE_URL),'token'=>$legacyToken]);
+        $twigBodyRenderer->render($email);
+        $this->emailVerifier->send('app_verify_email', $user,
+            $email
+        );
+    }
+
     #[Route('/verify/email', name: 'app_verify_email')]
-    public function verifyUserEmail(Request $request, TranslatorInterface $translator, FreshUserRepository $freshUserRepository): Response
+    public function verifyUserEmail(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $id = $request->query->get('id');
+        $id = $request->query->get('token');
 
         if (null === $id) {
             return $this->redirectToRoute('app_register');
         }
 
-        $user = $freshUserRepository->find($id);
-
-        if (null === $user) {
-            return $this->redirectToRoute('app_register');
-        }
+        $emailToken = $entityManager->getRepository(EmailToken::class)->findOneBy(['token'=>$id]);
 
         // validate email confirmation link, sets User::isVerified=true and persists
-        try {
-            $this->emailVerifier->handleEmailConfirmation($request, $user);
-        } catch (VerifyEmailExceptionInterface $exception) {
-            $this->addFlash('verify_email_error', $translator->trans($exception->getReason(), [], 'VerifyEmailBundle'));
+        $isValidToken = $entityManager->getConnection()->prepare("SELECT isTokenValid(:token)");
+        $isValidToken = $isValidToken->executeQuery(["token"=>$id])->fetchAllAssociative();
+        $entityManager->getConnection()->close();
+        if($isValidToken){
+            $user = $emailToken->getFreshUser();
+            // generate a signed url and email it to the user
+            $loader = new FilesystemLoader('email-template');
+            $twigEnv = new Environment($loader);
+            $twigBodyRenderer = new BodyRenderer($twigEnv);
+            $email = (new TemplatedEmail())
+                ->from(new Address('no-reply@fresh.app', 'Fresh Support !'))
+                ->to($user->getEmail())
+                ->subject('Votre compte est maintenant actif !')
+                ->htmlTemplate('success_confirmation_email.html.twig');
+            $twigBodyRenderer->render($email);
+            $this->emailVerifier->send('app_verify_email', $user,
+                $email
+            );
+            $user->setIsVerified(true);
+            $entityManager->persist($user);
+            $entityManager->flush();
+            $this->addFlash('success', 'Votre compte a été activé !');
+
+            return $this->redirectToRoute('app_main');
+        } else {
+            $this->addFlash('verify_email_error', "Lien invalide, redemandez un nouveau lien !");
 
             return $this->redirectToRoute('app_register');
         }
-
-        // @TODO Change the redirect on success and handle or remove the flash message in your templates
-        $this->addFlash('success', 'Votre mot de passe a été verifié !');
-
-        return $this->redirectToRoute('app_register');
     }
 }
