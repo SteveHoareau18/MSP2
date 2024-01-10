@@ -50,9 +50,13 @@ class FreshUser implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Refrigerator::class, orphanRemoval: true)]
     private Collection $refrigerators;
 
+    #[ORM\OneToMany(mappedBy: 'recipient', targetEntity: Alert::class, orphanRemoval: true)]
+    private Collection $alerts;
+
     public function __construct()
     {
         $this->refrigerators = new ArrayCollection();
+        $this->alerts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -209,6 +213,36 @@ class FreshUser implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($refrigerator->getOwner() === $this) {
                 $refrigerator->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Alert>
+     */
+    public function getAlerts(): Collection
+    {
+        return $this->alerts;
+    }
+
+    public function addAlert(Alert $alert): static
+    {
+        if (!$this->alerts->contains($alert)) {
+            $this->alerts->add($alert);
+            $alert->setRecipient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAlert(Alert $alert): static
+    {
+        if ($this->alerts->removeElement($alert)) {
+            // set the owning side to null (unless already changed)
+            if ($alert->getRecipient() === $this) {
+                $alert->setRecipient(null);
             }
         }
 

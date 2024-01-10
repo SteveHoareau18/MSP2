@@ -12,6 +12,12 @@
     {% endblock %}
 </head>
 <body>
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        {{ message }}
+    {% endfor %}
+{% endfor %}
+<button><a href="{{ path('app_logout') }}">Se déconnecter</a></button>
 {% block body %}{% endblock %}
 </body>
 </html>

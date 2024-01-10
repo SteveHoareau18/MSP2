@@ -28,6 +28,10 @@ class Alert
     #[ORM\JoinColumn(nullable: false)]
     private ?Refrigerator $refrigerator = null;
 
+    #[ORM\ManyToOne(inversedBy: 'alerts')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?FreshUser $recipient = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -77,6 +81,18 @@ class Alert
     public function setRefrigerator(?Refrigerator $refrigerator): static
     {
         $this->refrigerator = $refrigerator;
+
+        return $this;
+    }
+
+    public function getRecipient(): ?FreshUser
+    {
+        return $this->recipient;
+    }
+
+    public function setRecipient(?FreshUser $recipient): static
+    {
+        $this->recipient = $recipient;
 
         return $this;
     }

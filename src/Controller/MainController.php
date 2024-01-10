@@ -23,14 +23,19 @@ class MainController extends AbstractController
         $today->setTime(0, 0, 0);
         $dateString = $today->format('Y-m-d');
 
-        $alerts = $entityManager->getRepository(Alert::class)->createQueryBuilder('a')
-            ->where('a.alertedDate LIKE :dateString')
-            ->setParameter('dateString', $dateString."%")
-            ->getQuery()
-            ->getResult();
+        $legacyAlerts = $entityManager->getConnection()->prepare("CALL getTodayAlertForUser(:recipientId)");
+        $legacyAlerts = $legacyAlerts->executeQuery(['recipientId'=>$user->getId()])->fetchAllAssociative();
+
+        $alerts = array();
+        foreach ($legacyAlerts as $alert){
+            array_push($alerts,$entityManager->getRepository(Alert::class)->find($alert['alert_id']));
+        }
+
+
         return $this->render('index.html.twig', [
             'user' => $user,
-            'alerts'=>$alerts
+            'alerts'=>$alerts,
+            'dateString'=>$dateString
         ]);
     }
 }

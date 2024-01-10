@@ -54,19 +54,55 @@ class RefrigeratorController extends AbstractController
             $foodForm = $this->createForm(FoodFormType::class, $food);
             $foodForm->handleRequest($request);
             if($foodForm->isSubmitted() && $foodForm->isValid()){
+                $food->setName(strtoupper($food->getName()));
+                $food->setName(ucfirst(strtolower($food->getName())));
+                $foodsCanBe = $entityManager->getConnection()->prepare("CALL getFoodAlreadyExistForUser(:foodName,DATE(:expireDate),:userId)");
+                $expireDate = $food->getExpireDate()->format('Y-m-d 00:00:00');
+                $foodsCanBe = $foodsCanBe->executeQuery(['foodName'=>$food->getName(),'expireDate'=>$expireDate,'userId'=>$user->getId()])->fetchAllAssociative();
+                if(!in_array(0,$foodsCanBe[0]) && $request->request->get("food_add_force")=="false"){
+                    $this->addFlash('warning',"Un aliment déjà existant ressemble à ce que vous voulez ajouter.<br>Voulez-vous les regrouper?");
+                    return $this->render('refrigerator/food/add.html.twig',[
+                        'form'=>$foodForm,
+                        'number'=>$number,
+                        'foodsCanBe'=>$foodsCanBe,
+                        'refrigerator'=>$refrigerator
+                    ]);
+                }
                 $entityManager->persist($food);
                 $entityManager->flush();
                 $this->addFlash("success","Vous avez ajouté un nouvel aliment !");
                 return $this->redirectToRoute("app_refrigerator", ["number"=>$number]);
             }
-            return $this->render('refrigerator/add.html.twig',[
+            return $this->render('refrigerator/food/add.html.twig',[
                 'form'=>$foodForm,
-                'number'=>$number
+                'number'=>$number,
+                'refrigerator'=>$refrigerator
             ]);
         }else{
             $this->addFlash("error","Vous ne pouvez pas ajouter plus de 100 aliments dans un frigo !");
             return $this->redirectToRoute("app_main");
         }
+    }
+
+    #[Route('/refrigerator/{number}/food/remove/{id}', name: 'app_refrigerator_food_remove')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function removeFoodInRefrigirator(Request $request, EntityManagerInterface $entityManager, $number,$id): Response
+    {
+        $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$this->getUser()->getUserIdentifier()]);
+        $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner'=>$user->getId()]);
+        $refrigerator = $refrigerators[$number-1];
+        if($refrigerator == null){
+            return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
+        }
+        $food = $entityManager->getRepository(Food::class)->find($id);
+        if($food == null){
+            return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
+        }
+        return $this->render('refrigerator/food/remove.html.twig',[
+            'food'=>$food,
+            'number'=>$number,
+            'refrigerator'=>$refrigerator
+        ]);
     }
 
     #[Route('/refrigerator/add', name: 'app_refrigerator_add')]
@@ -81,10 +117,16 @@ class RefrigeratorController extends AbstractController
             $refrigeratorForm = $this->createForm(RefrigeratorFormType::class, $refrigerator);
             $refrigeratorForm->handleRequest($request);
             if($refrigeratorForm->isSubmitted() && $refrigeratorForm->isValid()){
+                foreach ($refrigerators as $legacyRefrigerator){
+                    if($legacyRefrigerator->getName() == $refrigerator->getName()){
+                        $this->addFlash('error',"Vous avez déjà un frigo portant se nom :)");
+                        return $this->redirectToRoute("app_main");
+                    }
+                }
                 $entityManager->persist($refrigerator);
                 $entityManager->flush();
                 $this->addFlash("success","Vous avez ajouté un nouveau frigo !");
-                return $this->redirectToRoute("app_refrigerator", ["number"=>count($refrigerators)]);
+                return $this->redirectToRoute("app_refrigerator", ["number"=>count($refrigerators)+1]);
             }
             return $this->render('refrigerator/add.html.twig',[
                 'form'=>$refrigeratorForm

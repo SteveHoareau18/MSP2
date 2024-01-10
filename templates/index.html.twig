@@ -1,12 +1,6 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    {% for label, messages in app.flashes %}
-        {% for message in messages %}
-            {{ message }}
-        {% endfor %}
-    {% endfor %}
-    <button><a href="{{ path('app_logout') }}">Se déconnecter</a></button>
     {% if app.user.verified == false %}
         <p>Vous devez activer votre compte en cliquant sur le lien envoyé par mail ! (no-reply@fresh.app)</p>
         <a href="{{ path('app_resend_registration_confirmation_email') }}">Cliquez pour renvoyer un lien
