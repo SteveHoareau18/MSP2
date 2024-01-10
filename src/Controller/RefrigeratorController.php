@@ -29,7 +29,8 @@ class RefrigeratorController extends AbstractController
             }
             return $this->render('refrigerator/index.html.twig', [
                 'refrigerator'=>$refrigerator,
-                'number'=>$number
+                'number'=>$number,
+                'user'=>$user
             ]);
         }else{
             $this->addFlash("error","Une erreur est survenue");
@@ -65,7 +66,8 @@ class RefrigeratorController extends AbstractController
                         'form'=>$foodForm,
                         'number'=>$number,
                         'foodsCanBe'=>$foodsCanBe,
-                        'refrigerator'=>$refrigerator
+                        'refrigerator'=>$refrigerator,
+                        'user'=>$user
                     ]);
                 }
                 $entityManager->persist($food);
@@ -76,7 +78,8 @@ class RefrigeratorController extends AbstractController
             return $this->render('refrigerator/food/add.html.twig',[
                 'form'=>$foodForm,
                 'number'=>$number,
-                'refrigerator'=>$refrigerator
+                'refrigerator'=>$refrigerator,
+                'user'=>$user
             ]);
         }else{
             $this->addFlash("error","Vous ne pouvez pas ajouter plus de 100 aliments dans un frigo !");
@@ -101,7 +104,8 @@ class RefrigeratorController extends AbstractController
         return $this->render('refrigerator/food/remove.html.twig',[
             'food'=>$food,
             'number'=>$number,
-            'refrigerator'=>$refrigerator
+            'refrigerator'=>$refrigerator,
+            'user'=>$user
         ]);
     }
 
@@ -129,7 +133,8 @@ class RefrigeratorController extends AbstractController
                 return $this->redirectToRoute("app_refrigerator", ["number"=>count($refrigerators)+1]);
             }
             return $this->render('refrigerator/add.html.twig',[
-                'form'=>$refrigeratorForm
+                'form'=>$refrigeratorForm,
+                'user'=>$user
             ]);
         }else{
             $this->addFlash("error","Vous ne pouvez pas ajouter plus de 2 frigos !");

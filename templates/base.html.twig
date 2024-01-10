@@ -1,23 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Fresh !{% endblock %}</title>
     <link rel="icon"
           href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
     {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
     {% endblock %}
 
     {% block javascripts %}
+            {{ encore_entry_script_tags('app') }}
     {% endblock %}
 </head>
-<body>
-{% for label, messages in app.flashes %}
-    {% for message in messages %}
-        {{ message }}
-    {% endfor %}
-{% endfor %}
-<button><a href="{{ path('app_logout') }}">Se déconnecter</a></button>
+<body class="theme-mytheme bg-white">
+<header>
+    {% if app.flashes is not empty %}
+    <nav class="border-gray-200 bg-gray-900 h-10 text-white text-center">
+        {% for message in app.flashes() %}
+{#            //TODO#}
+            {{ message }}
+        {% endfor %}
+    </nav>
+    {% endif %}
+
+    <nav class="border-gray-200 px-4 lg:px-6 py-2.5">
+        <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
+            <a href="{{ path('app_main') }}" class="flex items-center">
+                <h1 class="self-center text-7xl italic font-bold text-success">Fresh !</h1>
+            </a>
+            {% if app.user %}
+            <div class="flex items-center lg:order-2">
+                <a href="{{ path('app_logout') }}" class="text-white font-bold">
+                    <div class="bg-success border-2 border-primary btn text-white">
+                        Déconnexion
+                    </div>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+</header>
 {% block body %}{% endblock %}
 </body>
 </html>

@@ -3,7 +3,16 @@
 {% block title %}Fresh ! Nouveau Frigo{% endblock %}
 
 {% block body %}
-    {{ form_start(form) }}
-    {{ form_end(form) }}
-    <button><a href="{{ path('app_main') }}">Retour</a></button>
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
+        <h3 class="text-xl">Remplissez le formulaire pour ajouter un frigo !</h3>
+        <div class="mt-10">
+            {{ form_start(form) }}
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="text-center flex justify-center mt-52">
+        <button class="btn btn-info text-white"><a href="{{ path('app_main') }}"><< RETOUR</a></button>
+    </div>
 {% endblock %}

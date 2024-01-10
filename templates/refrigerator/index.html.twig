@@ -3,27 +3,38 @@
 {% block title %}Fresh ! Frigo {{ refrigerator.name }}{% endblock %}
 
 {% block body %}
-    <h1>Frigo {{ refrigerator.name }}</h1>
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
+        <h2 class="capitalize font-bold text-2xl">Dans le frigo {{ refrigerator.name }}:</h2>
+    </div>
     {% if refrigerator.foods|length == 0 %}
-        <p>Il n'y a pas d'aliment dans ce frigo !</p>
+        <p>Il n'y a pas d'aliment !</p>
     {% else %}
-        <h2>Aliments disponibles</h2>
-        {% for food in refrigerator.foods %}
-            <div>
-                <div>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                    </svg>
+        <div class="space h-5"></div>
+        <h3 class="text-center bg-pink-500 text-white font-semibold text-xl rounded">Voici les aliments disponibles !</h3>
+        <div class="space h-5"></div>
+        <div class="ml-7 mr-7 grid grid-cols-4 gap-20">
+            {% for food in refrigerator.foods %}
+                <div class="flex justify-center text-center">
+                    <div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p>{{ food.quantity }} {{ food.name }}</p>
+                        <p>Ajouté le {{ food.addingDate|date('d/m/Y à H:i') }}</p>
+                        <p>Expire le {{ food.expireDate|date('d/m/Y') }}</p>
+                    </div>
                 </div>
-                <div>
-                    <p>{{ food.quantity }} {{ food.name }}</p>
-                    <p>Ajouté le {{ food.addingDate|date('d/m/Y à H:i') }}</p>
-                    <p>Expire le {{ food.expireDate|date('d/m/Y') }}</p>
-                </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
     {% endif %}
-    <button><a href="{{ path('app_refrigerator_food_add',{'number':number}) }}">Ajouter un aliment</a></button>
-    <button><a href="{{ path('app_main') }}">Retour</a></button>
+    <a href="{{ path('app_refrigerator_food_add',{'number':number}) }}" class="font-semibold capitalize">
+        <button class="bg-primary rounded-2xl text-white p-2">+ Ajouter un aliment</button>
+    </a>
+    </div>
+    <div class="text-center flex justify-center mt-56">
+    <button class="btn btn-info text-white"><a href="{{ path('app_main') }}"><< RETOUR</a></button>
+    </div>
 {% endblock %}
