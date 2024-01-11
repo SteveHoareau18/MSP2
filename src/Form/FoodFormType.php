@@ -19,15 +19,21 @@ class FoodFormType extends AbstractType
     {
         $builder
             ->add('name',TextType::class,[
-                'label'=>"Nom"
+                'label'=>"Nom : ",
+                'attr'=>['class'=>'ml-1 input bg-white border-gray-500']
             ])
             ->add('quantity',NumberType::class, [
-                'label'=>'Quantité'
+                'label'=>'Quantité : ',
+                'attr'=>['class'=>'ml-1 input bg-white border-gray-500 mt-5']
             ])
             ->add('expireDate',DateType::class, [
-                'label'=>"Date de péremption"
+                'label'=>"Date de péremption : ",
+                'attr'=>['class'=>'ml-1 input bg-white border-gray-500 mt-5']
             ])
-            ->add('submit',SubmitType::class)
+            ->add('submit',SubmitType::class, [
+                'label'=>"Ajouter",
+                'attr'=>['class'=>'btn btn-primary text-white mt-5 w-52']
+            ])
         ;
     }
 

@@ -16,16 +16,22 @@
 </head>
 <body class="theme-mytheme bg-white">
 <header>
-    {% if app.flashes is not empty %}
-    <nav class="border-gray-200 bg-gray-900 h-10 text-white text-center">
-        {% for message in app.flashes() %}
-{#            //TODO#}
-            {{ message }}
+    {% for label, flashes in app.session.flashbag.all %}
+        {% set i = 0 %}
+        {% for flash in flashes %}
+            <div class="alert alert-{{ label }}" id="flash-{{ i }}">
+                {{ flash }}
+            </div>
+            <script>
+                setTimeout(function(){
+                    document.getElementById('flash-{{ i }}').style = "display:none;";
+                },5000);
+            </script>
+            {% set i = i+1 %}
         {% endfor %}
-    </nav>
-    {% endif %}
+    {% endfor %}
 
-    <nav class="border-gray-200 px-4 lg:px-6 py-2.5">
+    <nav class="px-4 lg:px-6 py-2.5">
         <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
             <a href="{{ path('app_main') }}" class="flex items-center">
                 <h1 class="self-center text-7xl italic font-bold text-success">Fresh !</h1>

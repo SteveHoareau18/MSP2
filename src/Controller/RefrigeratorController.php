@@ -101,12 +101,22 @@ class RefrigeratorController extends AbstractController
         if($food == null){
             return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
         }
-        return $this->render('refrigerator/food/remove.html.twig',[
-            'food'=>$food,
-            'number'=>$number,
-            'refrigerator'=>$refrigerator,
-            'user'=>$user
-        ]);
+
+        if($request->request->has('_remove_'.$id.'_token') && $this->isCsrfTokenValid('_remove_food_refrigerator_token_value',$request->request->get('_remove_'.$id.'_token'))){
+            $name = $food->getName();
+            foreach($food->getRefrigerator()->getAlerts() as $alert){
+                if($alert->getFood()->getId()===$food->getId()){
+                    $entityManager->remove($alert);
+                    $entityManager->flush();
+                }
+            }
+            $entityManager->remove($food);
+            $entityManager->flush();
+            $this->addFlash('success',"L'aliment ".$name." a été consommé ou supprimé !");
+        }else{
+            $this->addFlash('error',"Une erreur est survenue, merci de re-essayer...");
+        }
+        return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
     }
 
     #[Route('/refrigerator/add', name: 'app_refrigerator_add')]

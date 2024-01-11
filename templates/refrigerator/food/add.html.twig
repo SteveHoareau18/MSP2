@@ -13,16 +13,26 @@
             </div>
         {% endfor %}
     {% endif %}
-    {{ form_start(form) }}
-    {{ form_row(form.name) }}
-    {{ form_row(form.quantity) }}
-    {{ form_row(form.expireDate) }}
-    {{ form_row(form.submit, {'label': label}) }}
-    {% if label != "Ajouter" %}
-        <input hidden value="true" name="food_add_force">
-    {% else %}
-        <input hidden value="false" name="food_add_force">
-    {% endif %}
-    {{ form_end(form) }}
-    <button><a href="{{ path('app_refrigerator',{'number':number}) }}">Retour</a></button>
+
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
+        <h3 class="text-xl">Remplissez le formulaire pour ajouter un aliment dans {{ refrigerator.name }} !</h3>
+        <div class="mt-10">
+            {{ form_start(form) }}
+            {{ form_row(form.name) }}
+            {{ form_row(form.quantity) }}
+            {{ form_row(form.expireDate) }}
+            {{ form_row(form.submit, {'label': label}) }}
+            {% if label != "Ajouter" %}
+                <input hidden value="true" name="food_add_force">
+            {% else %}
+                <input hidden value="false" name="food_add_force">
+            {% endif %}
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="text-center flex justify-center mt-52">
+        <a href="{{ path('app_refrigerator',{'number':number}) }}"><button class="btn btn-info text-white"><< RETOUR</button></a>
+    </div>
 {% endblock %}
