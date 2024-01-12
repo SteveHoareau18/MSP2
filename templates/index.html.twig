@@ -99,19 +99,19 @@
         </div>
         <h2 class="text-center bold text-2xl">Vos recettes</h2>
         <div class="space h-5"></div>
-        {% if user.refrigerators|length == 0 %}
+        {% if user.recipes|length == 0 %}
             <div class="text-center">
-                <p>Vous n'avez pas de frigo, donc pas d'aliments !</p>
+                <p>Vous n'avez pas de recettes :'(</p>
             </div>
         {% endif %}
         <div class="text-center flex justify-around">
-            {% if user.refrigerators|length < 3 %}
+            {% if user.recipes|length < 3 %}
                 {% set number = 0 %}
-                {% for refrigerator in user.refrigerators %}
+                {% for recipe in user.recipes %}
                     {% set number=number+1 %}
                     <div>
                         <a href="{{ path('app_refrigerator',{'number':number}) }}" class="text-center font-bold capitalize">
-                            <img src="{{ asset('img/_fc63166d-6d43-4a34-a186-eb67efa4d00d.jpg') }}" alt="Frigo" height="512px" width="512px">
+                            <img src="{{ asset('img/_c29e01f8-d811-4281-8513-79172f6bc93f.jpg') }}" alt="Frigo" height="512px" width="512px">
                             {{ refrigerator.name }}
                         </a>
                     </div>
@@ -119,7 +119,7 @@
                 {% if user.refrigerators|length != 2 %}
                     <a href="{{ path('app_refrigerator_add') }}" class="font-semibold capitalize m-10">
                         <div class="bg-primary rounded-2xl text-white p-10 h-full w-full flex items-center justify-center">
-                            + AJOUTER UN FRIGO
+                            + AJOUTER UNE RECETTE
                         </div>
                     </a>
                 {% endif %}

@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fresh ! Nouveau Frigo{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
+        <h3 class="text-xl">Remplissez le formulaire pour ajouter un frigo !</h3>
+        <div class="mt-10">
+            {{ form_start(form) }}
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="text-center flex justify-center mt-52">
+        <a href="{{ path('app_main') }}"><button class="btn btn-info text-white"><< RETOUR</button></a>
+    </div>
+{% endblock %}

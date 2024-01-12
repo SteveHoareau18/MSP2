@@ -32,9 +32,13 @@ class Recipe
     #[ORM\ManyToMany(targetEntity: Food::class, inversedBy: 'recipes')]
     private Collection $foods;
 
+    #[ORM\ManyToMany(targetEntity: FoodNotInRefrigerator::class, inversedBy: 'recipes')]
+    private Collection $foodsNotInRefrigerator;
+
     public function __construct()
     {
         $this->foods = new ArrayCollection();
+        $this->foodsNotInRefrigerator = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -109,7 +113,31 @@ class Recipe
 
     public function removeFood(Food $food): static
     {
-        $this->foods->removeElement($food);
+        if($this->foods->contains($food)) $this->foods->removeElement($food);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FoodNotInRefrigerator>
+     */
+    public function getFoodsNotInRefrigerator(): Collection
+    {
+        return $this->foodsNotInRefrigerator;
+    }
+
+    public function addFoodsNotInRefrigerator(FoodNotInRefrigerator $foodsNotInRefrigerator): static
+    {
+        if (!$this->foodsNotInRefrigerator->contains($foodsNotInRefrigerator)) {
+            $this->foodsNotInRefrigerator->add($foodsNotInRefrigerator);
+        }
+
+        return $this;
+    }
+
+    public function removeFoodsNotInRefrigerator(FoodNotInRefrigerator $foodsNotInRefrigerator): static
+    {
+        $this->foodsNotInRefrigerator->removeElement($foodsNotInRefrigerator);
 
         return $this;
     }

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Food;
+use App\Entity\FoodNotInRefrigerator;
 use App\Entity\FreshUser;
 use App\Entity\Refrigerator;
 use App\Form\FoodFormType;
@@ -360,6 +361,19 @@ class RefrigeratorController extends AbstractController
             foreach ($refrigerator->getAlerts() as $alert) {
                 $entityManager->remove($alert);
                 $entityManager->flush();
+            }
+            foreach ($refrigerator->getOwner()->getRecipes() as $recipe){
+                foreach ($refrigerator->getFoods() as $food) {
+                    $recipe->removeFood($food);
+                    if($recipe->getFoods()->contains($food)) {
+                        $foodNotInRefrigerator = new FoodNotInRefrigerator();
+                        $foodNotInRefrigerator->setName($food->getName());
+                        $foodNotInRefrigerator->setQuantity($food->getQuantity());
+                        $foodNotInRefrigerator->addRecipe($recipe);
+                        $entityManager->persist($foodNotInRefrigerator);
+                        $entityManager->flush();
+                    }
+                }
             }
             foreach ($refrigerator->getFoods() as $food) {
                 $entityManager->remove($food);
