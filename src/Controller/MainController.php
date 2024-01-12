@@ -60,6 +60,9 @@ class MainController extends AbstractController
         $formUser->handleRequest($request);
 
         if($formUser->isSubmitted() && $formUser->isValid()){
+            $user->setName(strtoupper($user->getName()));
+            $user->setFirstname(strtoupper($user->getFirstname()));
+            $user->setFirstname(ucfirst(strtolower($user->getFirstname())));
             $user->setPassword($passwordHasher->hashPassword($user,$request->request->all()['fresh_user_form']['plainPassword']));
             $entityManager->persist($user);
             $entityManager->flush();

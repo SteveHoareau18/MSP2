@@ -8,7 +8,7 @@
         <h2 class="capitalize font-bold text-2xl">Dans le frigo {{ refrigerator.name }}:</h2>
     </div>
     {% if refrigerator.foods|length == 0 %}
-        <p>Il n'y a pas d'aliment !</p>
+        <p class="text-center m-10">Il n'y a pas d'aliment !</p>
     {% else %}
         <div class="space h-5"></div>
         <h3 class="text-center bg-pink-500 text-white font-semibold text-xl rounded">Voici les aliments disponibles !</h3>

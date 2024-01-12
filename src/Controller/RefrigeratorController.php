@@ -25,6 +25,9 @@ class RefrigeratorController extends AbstractController
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner' => $user->getId()]);
         if (!empty($refrigerators)) {
+            if($number < 1 || $number > 2){
+                return $this->redirectToRoute("app_main");
+            }
             $refrigerator = $refrigerators[$number - 1];
             if ($refrigerator == null) {
                 return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -91,6 +94,9 @@ class RefrigeratorController extends AbstractController
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner' => $user->getId()]);
+        if($number < 1 || $number > 2){
+            return $this->redirectToRoute("app_main");
+        }
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -169,6 +175,9 @@ class RefrigeratorController extends AbstractController
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner' => $user->getId()]);
+        if($number < 1 || $number > 2){
+            return $this->redirectToRoute("app_main");
+        }
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -209,6 +218,9 @@ class RefrigeratorController extends AbstractController
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner' => $user->getId()]);
+        if($number < 1 || $number > 2){
+            return $this->redirectToRoute("app_main");
+        }
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -336,6 +348,9 @@ class RefrigeratorController extends AbstractController
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner' => $user->getId()]);
+        if($number < 1 || $number > 2){
+            return $this->redirectToRoute("app_main");
+        }
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
