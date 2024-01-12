@@ -14,7 +14,7 @@
         <h3 class="text-center bg-pink-500 text-white font-semibold text-xl rounded">Voici les aliments disponibles !</h3>
         <div class="space h-5"></div>
         <div class="ml-7 mr-7 grid grid-cols-4 gap-20">
-            {% for food in refrigerator.foods %}
+            {% for food in refrigerator.foods|sort((a, b) => a.expireDate.timestamp - b.expireDate.timestamp) %}
                 <div class="flex justify-center text-center">
                     <div>
                         <div class="m-4">
@@ -26,7 +26,7 @@
                             </a>
                         </div>
                         <div class="m-4">
-                            <a class="link" href="#edit_{{ food.id }}">
+                            <a class="link" href="#modify_{{ food.id }}" onclick="_modify_{{ food.id }}.showModal()">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
                                     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
                                 </svg>
@@ -36,17 +36,28 @@
                     <div>
                         <p>{{ food.quantity }} {{ food.name }}</p>
                         <p>Ajouté le {{ food.addingDate|date('d/m/Y à H:i') }}</p>
-                        <p>Expire le {{ food.expireDate|date('d/m/Y') }}</p>
+                        <p>A consommer avant le {{ food.expireDate|date('d/m/Y') }}</p>
+                        {% if food.expireDate|date('d/m/Y') < "now"|date('d/m/Y') %}
+                            <p class="badge badge-error text-white">Date de péremption dépassée !</p>
+                        {% elseif food.expireDate|date('d/m/Y') == "now"|date('d/m/Y') %}
+                            <p class="badge badge-warning text-white">A consommer aujourd'hui !</p>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
     {% endif %}
-    <a href="{{ path('app_refrigerator_food_add',{'number':number}) }}" class="font-semibold capitalize">
-        <button class="bg-primary rounded-2xl text-white p-2">+ Ajouter un aliment</button>
-    </a>
+    <div class="flex justify-center">
+        <a href="{{ path('app_refrigerator_food_add',{'number':number}) }}" class="font-semibold capitalize h-0">
+            <button class="bg-primary rounded-2xl text-white p-2">+ AJOUTER UN ALIMENT</button>
+        </a>
+    </div>
     </div>
     <div class="text-center flex justify-center mt-56">
-        <a href="{{ path('app_main') }}"><button class="btn btn-info text-white"><< RETOUR</button></a>
+        <a href="#" onclick="_modify_modal_id.showModal()" class="btn btn-warning text-white m-5">MODIFIER {{ refrigerator.name }}</a>
+        <a href="#" onclick="_remove_modal_id.showModal()" class="btn btn-error text-white m-5">SUPPRIMER {{ refrigerator.name }}</a>
+    </div>
+    <div class="text-center flex justify-center mt-5">
+        <a href="{{ path('app_main') }}" class="btn btn-info text-white"><< RETOUR</a>
     </div>
 
     {% for food in refrigerator.foods %}
@@ -63,5 +74,56 @@
                 </div>
             </div>
         </dialog>
+
+        <dialog id="_modify_{{ food.id }}" class="modal">
+            <div class="modal-box bg-white">
+                <h3 class="font-bold text-lg text-center">Modifier un aliment</h3>
+                <div class="modal-action text-left flex justify-center">
+                    {% set form = foodFormArr[food.id].createView %}
+                    {{ form_start(form, {'action':path('app_refrigerator_food_modify',{'number':number,'id':food.id})}) }}
+                    <input hidden="" name="_modify_{{ food.id }}_token" value="{{ csrf_token('_modify_food_refrigerator_token_value') }}">
+                    {{ form_row(form.name) }}
+                    {{ form_row(form.quantity) }}
+                    {{ form_row(form.expireDate) }}
+
+                    <div class="flex justify-center">
+                        {{ form_row(form.submit, {'label': 'METTRE A JOUR','attr':{'class':'btn btn-warning text-white mt-5'}}) }}
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+                <div class="flex justify-center mt-2">
+                    <a href="{{ path('app_refrigerator',{'number':number}) }}" class="btn btn-info text-white text-center">FERMER</a>
+                </div>
+            </div>
+        </dialog>
     {% endfor %}
+
+    <dialog id="_modify_modal_id" class="modal">
+        <div class="modal-box bg-white">
+            <h3 class="font-bold text-xl">{{ user.firstname }}, remplissez le formulaire pour modifier <b class="font-semibold capitalize text-lg">{{ refrigerator.name }}</b></h3>
+            <div class="modal-action text-left flex justify-center">
+                {{ form_start(refrigeratorForm) }}
+                    {{ form_row(refrigeratorForm.name) }}
+                    <div class="flex justify-center">
+                        {{ form_row(refrigeratorForm.submit, {'label': 'METTRE A JOUR','attr':{'class':'btn btn-warning text-white mt-5'}}) }}
+                    </div>
+                {{ form_end(refrigeratorForm) }}
+            </div>
+            <div class="flex justify-center mt-2">
+                <a href="{{ path('app_refrigerator',{'number':number}) }}" class="btn btn-info text-white text-center">ANNULER</a>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="_remove_modal_id" class="modal">
+        <div class="modal-box bg-white">
+            <h3 class="font-bold text-xl">Voulez-vous vraiment supprimer <b class="font-semibold capitalize text-lg">{{ refrigerator.name }}</b> <span class="text-error">et tous ses aliments !</span></h3>
+            <div class="modal-action text-left flex justify-center">
+                <a href="{{ path('app_refrigerator_remove',{'number':number}) }}?token={{ csrf_token('manual-delete') }}" class="btn btn-error text-white">SUPPRIMER</a>
+            </div>
+            <div class="flex justify-center mt-2">
+                <a href="{{ path('app_refrigerator',{'number':number}) }}" class="btn btn-info text-white text-center">ANNULER</a>
+            </div>
+        </div>
+    </dialog>
 {% endblock %}

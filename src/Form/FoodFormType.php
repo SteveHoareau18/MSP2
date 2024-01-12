@@ -12,6 +12,9 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\GreaterThan;
+use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
+use Symfony\Component\Validator\Constraints\Range;
 
 class FoodFormType extends AbstractType
 {
@@ -22,13 +25,28 @@ class FoodFormType extends AbstractType
                 'label'=>"Nom : ",
                 'attr'=>['class'=>'ml-1 input bg-white border-gray-500']
             ])
-            ->add('quantity',NumberType::class, [
-                'label'=>'Quantité : ',
-                'attr'=>['class'=>'ml-1 input bg-white border-gray-500 mt-5']
+            ->add('quantity', NumberType::class, [
+                'label' => 'Quantité : ',
+                'attr' => ['class' => 'ml-1 input bg-white border-gray-500 mt-5'],
+                'constraints' => [
+                    new Range([
+                        'min' => 0,
+                        'max' => 100,
+                        'minMessage' => 'La quantité doit être au moins {{ limit }}.',
+                        'maxMessage' => 'La quantité ne peut pas être supérieure à {{ limit }}.',
+                        'notInRangeMessage' => 'La quantité doit être au dessus 0 et en dessous de 100'
+                    ]),
+                ],
             ])
-            ->add('expireDate',DateType::class, [
-                'label'=>"Date de péremption : ",
-                'attr'=>['class'=>'ml-1 input bg-white border-gray-500 mt-5']
+            ->add('expireDate', DateType::class, [
+                'label' => "Date de péremption : ",
+                'attr' => ['class' => 'ml-1 input bg-white border-gray-500 mt-5'],
+                'constraints' => [
+                    new GreaterThanOrEqual([
+                        'value' => 'today',
+                        'message' => 'La date de péremption doit être égale ou ultérieure à aujourd\'hui.',
+                    ]),
+                ],
             ])
             ->add('submit',SubmitType::class, [
                 'label'=>"Ajouter",

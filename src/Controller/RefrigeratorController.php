@@ -7,18 +7,22 @@ use App\Entity\FreshUser;
 use App\Entity\Refrigerator;
 use App\Form\FoodFormType;
 use App\Form\RefrigeratorFormType;
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Form\Form;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\VarDumper\VarDumper;
 
 class RefrigeratorController extends AbstractController
 {
     #[Route('/refrigerator/want/{number}', name: 'app_refrigerator')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function index(EntityManagerInterface $entityManager, $number): Response
+    public function index(Request $request, EntityManagerInterface $entityManager, $number): Response
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$this->getUser()->getUserIdentifier()]);
         $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner'=>$user->getId()]);
@@ -27,10 +31,51 @@ class RefrigeratorController extends AbstractController
             if($refrigerator == null){
                 return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
             }
+            $foodFormArr = array();
+            $legacyFoodFormArr = array();
+            foreach ($refrigerator->getFoods() as $food){
+                $foodForm = $this->createForm(FoodFormType::class,$food);
+                $foodForm->handleRequest($request);
+                $foodFormArr[$food->getId()] = $foodForm;
+                $legacyFoodFormArr[$food->getId()] = $foodForm;
+            }
+
+            $legacyName = $refrigerator->getName();
+            $refrigeratorForm = $this->createForm(RefrigeratorFormType::class,$refrigerator);
+            $refrigeratorForm->handleRequest($request);
+
+
+            if($refrigeratorForm->isSubmitted() && $refrigeratorForm->isValid()){
+                $entityManager->persist($refrigerator);
+                $entityManager->flush();
+                $this->addFlash('success','Vous avez modifié votre Frigo ('.$refrigerator->getName().' anciennment '.$legacyName.')');
+                return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
+            }
+
+            if($request->query->has('force_delete') && $request->query->get('force_delete')=="true" &&
+                $request->query->has('foodId')){
+                $food = $entityManager->getRepository(Food::class)->find($request->query->get('foodId'));
+                if($food != null){
+                    $name = $food->getName();
+                    foreach ($food->getRefrigerator()->getAlerts() as $alert){
+                        if($alert->getFood()->getId() == $food->getId()){
+                            $entityManager->remove($alert);
+                            $entityManager->flush();
+                        }
+                    }
+                    $entityManager->remove($food);
+                    $entityManager->flush();
+                    $this->addFlash('success','L\'aliment '.$name.' a été consommé ou supprimé !');
+                    return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
+                }
+            }
+
             return $this->render('refrigerator/index.html.twig', [
                 'refrigerator'=>$refrigerator,
                 'number'=>$number,
-                'user'=>$user
+                'user'=>$user,
+                'foodFormArr' => $foodFormArr,
+                'refrigeratorForm'=> $refrigeratorForm
             ]);
         }else{
             $this->addFlash("error","Une erreur est survenue");
@@ -38,6 +83,10 @@ class RefrigeratorController extends AbstractController
         }
     }
 
+
+    /**
+     * @throws Exception
+     */
     #[Route('/refrigerator/{number}/food/add', name: 'app_refrigerator_food_add')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function addFoodInRefrigirator(Request $request, EntityManagerInterface $entityManager, $number): Response
@@ -50,6 +99,25 @@ class RefrigeratorController extends AbstractController
         }
         $foods = $refrigerator->getFoods();
         if(count($foods) < 100){
+            if($request->query->has('force_regroup') &&
+                $request->query->get('force_regroup') == "true" &&
+                    $request->query->has('foodId') &&
+                        $request->query->has('withQuantity')){
+                $food = $entityManager->getRepository(Food::class)->find($request->query->get('foodId'));
+                if($food == null){
+                    $this->addFlash('error','Une erreur est survenue...');
+                    return $this->redirectToRoute("app_refrigerator_food_add",['number'=>$number]);
+                }
+                if(floatval($request->query->get('withQuantity')) < 1 && floatval($request->query->get('withQuantity')) > 200) {
+                    $this->addFlash('error','Une erreur est survenue...');
+                    return $this->redirectToRoute("app_refrigerator_food_add",['number'=>$number]);
+                }
+                $food->setQuantity($request->query->get('withQuantity'));
+                $entityManager->persist($food);
+                $entityManager->flush();
+                $this->addFlash('success','Vous avez regroupé 2 aliments ensemble ! ('.$food->getName().')');
+                return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
+            }
             $food = new Food();
             $food->setRefrigerator($refrigerator);
             $foodForm = $this->createForm(FoodFormType::class, $food);
@@ -67,8 +135,18 @@ class RefrigeratorController extends AbstractController
                         'number'=>$number,
                         'foodsCanBe'=>$foodsCanBe,
                         'refrigerator'=>$refrigerator,
-                        'user'=>$user
+                        'user'=>$user,
+                        'legacyFood'=>$food
                     ]);
+                }
+                if($food->getQuantity()<=0){
+                    $this->addFlash('error',"La quantité d'un aliment ne doit pas être inférieure ou égale à 0");
+                    return $this->redirectToRoute("app_refrigerator_food_add",['number'=>$number]);
+                }
+                $dateTimeNow = new \DateTime("now");
+                if($food->getExpireDate()->format("d-m-Y") != $dateTimeNow->format("d-m-Y") && $food->getExpireDate()->diff($dateTimeNow)->invert == 0){
+                    $this->addFlash('error',"La date d'expiration d'un aliment ne doit pas être inférieure à la date d'aujourd'hui");
+                    return $this->redirectToRoute("app_refrigerator_food_add",['number'=>$number]);
                 }
                 $entityManager->persist($food);
                 $entityManager->flush();
@@ -102,6 +180,10 @@ class RefrigeratorController extends AbstractController
             return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
         }
 
+        if($food->getRefrigerator()->getId() != $refrigerator->getId()){
+            return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
+        }
+
         if($request->request->has('_remove_'.$id.'_token') && $this->isCsrfTokenValid('_remove_food_refrigerator_token_value',$request->request->get('_remove_'.$id.'_token'))){
             $name = $food->getName();
             foreach($food->getRefrigerator()->getAlerts() as $alert){
@@ -117,6 +199,95 @@ class RefrigeratorController extends AbstractController
             $this->addFlash('error',"Une erreur est survenue, merci de re-essayer...");
         }
         return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
+    }
+
+    #[Route('/refrigerator/{number}/food/modify/{id}', name: 'app_refrigerator_food_modify')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function modifyFoodInRefrigirator(Request $request, EntityManagerInterface $entityManager, $number,$id): Response
+    {
+        $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$this->getUser()->getUserIdentifier()]);
+        $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner'=>$user->getId()]);
+        $refrigerator = $refrigerators[$number-1];
+        if($refrigerator == null){
+            return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
+        }
+        $foods = $refrigerator->getFoods();
+        if(count($foods) < 100){
+            dd($request);
+            $food = $entityManager->getRepository(Food::class)->find($request->query->get('foodId'));
+            if($food == null){
+                $this->addFlash('error','Une erreur est survenue...');
+                return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
+            }
+            if(floatval($request->query->get('withQuantity')) < 1 && floatval($request->query->get('withQuantity')) > 200) {
+                $this->addFlash('error','Une erreur est survenue...');
+                return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
+            }
+            $food->setQuantity($request->query->get('withQuantity'));
+            $food->setName(strtoupper($food->getName()));
+            $food->setName(ucfirst(strtolower($food->getName())));
+            $foodsCanBe = $entityManager->getConnection()->prepare("CALL getFoodAlreadyExistForUser(:foodName,DATE(:expireDate),:userId)");
+            $expireDate = $food->getExpireDate()->format('Y-m-d 00:00:00');
+            $foodsCanBe = $foodsCanBe->executeQuery(['foodName'=>$food->getName(),'expireDate'=>$expireDate,'userId'=>$user->getId()])->fetchAllAssociative();
+            if(!in_array(0,$foodsCanBe[0]) && $request->request->get("food_add_force")=="false"){
+                $this->addFlash('warning',"Un aliment déjà existant ressemble à ce que vous voulez ajouter.<br>Voulez-vous les regrouper?");
+                return $this->render('refrigerator/food/add.html.twig',[
+                    'form'=>$foodForm,
+                    'number'=>$number,
+                    'foodsCanBe'=>$foodsCanBe,
+                    'refrigerator'=>$refrigerator,
+                    'user'=>$user,
+                    'legacyFood'=>$food
+                ]);
+            }
+            if($food->getQuantity()<=0){
+                $this->addFlash('error',"La quantité d'un aliment ne doit pas être inférieure ou égale à 0");
+                return $this->redirectToRoute("app_refrigerator_food_add",['number'=>$number]);
+            }
+            $dateTimeNow = new \DateTime("now");
+            if($food->getExpireDate()->format("d-m-Y") != $dateTimeNow->format("d-m-Y") && $food->getExpireDate()->diff($dateTimeNow)->invert == 0){
+                $this->addFlash('error',"La date d'expiration d'un aliment ne doit pas être inférieure à la date d'aujourd'hui");
+                return $this->redirectToRoute("app_refrigerator_food_add",['number'=>$number]);
+            }
+            $entityManager->persist($food);
+            $entityManager->flush();
+            $this->addFlash("success","Vous avez ajouté un nouvel aliment !");
+            return $this->redirectToRoute("app_refrigerator", ["number"=>$number]);
+        }else{
+            $this->addFlash("error","Vous ne pouvez pas ajouter plus de 100 aliments dans un frigo !");
+            return $this->redirectToRoute("app_refrigerator",['number'=>$number]);
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    #[Route('/refrigerator/{number}/delete', name: 'app_refrigerator_remove')]
+    #[IsGranted("IS_AUTHENTICATED_FULLY")]
+    public function deleteRefrigirator(Request $request, EntityManagerInterface $entityManager, $number): Response
+    {
+        $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$this->getUser()->getUserIdentifier()]);
+        $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner'=>$user->getId()]);
+        $refrigerator = $refrigerators[$number-1];
+        if($refrigerator == null){
+            return $this->redirectToRoute("app_refrigerator", ["number"=>1]);
+        }
+        $legacyName = $refrigerator->getName();
+        if($request->query->has('token') && $this->isCsrfTokenValid('manual-delete',$request->query->get('token'))){
+            foreach ($refrigerator->getAlerts() as $alert){
+                $entityManager->remove($alert);
+                $entityManager->flush();
+            }
+            foreach ($refrigerator->getFoods() as $food){
+                $entityManager->remove($food);
+                $entityManager->flush();
+            }
+            $entityManager->remove($refrigerator);
+            $entityManager->flush();
+            $this->addFlash('success','Votre frigo '.$legacyName. ' a été supprimé !');
+        }
+
+        return $this->redirectToRoute("app_main");
     }
 
     #[Route('/refrigerator/add', name: 'app_refrigerator_add')]

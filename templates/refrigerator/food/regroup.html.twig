@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fresh ! Nouvel aliment dans le frigo {{ refrigerator.name }}{% endblock %}
+
+{% block body %}
+    {% set label = "Ajouter" %}
+    {% if foodsCanBe is defined %}
+        {% set label = "Continuer d'ajouter" %}
+        {% for food in foodsCanBe %}
+            <div>
+                <p>{{ food.name }}</p>
+                <button><a href="#">Regrouper</a></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
+        <h3 class="text-xl">Remplissez le formulaire pour ajouter un aliment dans {{ refrigerator.name }} !</h3>
+        <div class="mt-10">
+
+        </div>
+    </div>
+
+    <div class="text-center flex justify-center mt-52">
+        <a href="{{ path('app_refrigerator',{'number':number}) }}"><button class="btn btn-info text-white"><< RETOUR</button></a>
+    </div>
+{% endblock %}
