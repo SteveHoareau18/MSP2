@@ -25,6 +25,9 @@ class MainController extends AbstractController
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(["email"=>$this->getUser()->getUserIdentifier()]);
         $today = new \DateTime();
+        $user->setLastConnection($today);
+        $entityManager->persist($user);
+        $entityManager->flush();
         $today->setTime(0, 0, 0);
         $dateString = $today->format('Y-m-d');
 
