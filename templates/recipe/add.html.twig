@@ -5,9 +5,22 @@
 {% block body %}
     <div class="text-center">
         <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
-        <h3 class="text-xl">Remplissez le formulaire pour ajouter un frigo !</h3>
+        <h3 class="text-xl">Remplissez le formulaire pour ajouter une recette !</h3>
         <div class="mt-10">
             {{ form_start(form) }}
+                {{ form_row(form.name) }}
+            <label for="foodId">Selectionnez un aliment</label>
+            {% for refrigerator in refrigerators %}
+                <a href="">{{ refrigerator.name }}</a>
+            {% endfor %}
+            <input type="text" id="foodId" name="foodId" list="foodList">
+
+            <datalist id="foodList">
+                {% for food in foods %}
+                    <option value="{{ food.name }}">
+                {% endfor %}
+            </datalist>
+                {{ form_row(form.submit) }}
             {{ form_end(form) }}
         </div>
     </div>

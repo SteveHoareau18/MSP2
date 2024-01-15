@@ -8,6 +8,7 @@ use App\Entity\FreshUser;
 use App\Entity\Refrigerator;
 use App\Form\FreshUserFormType;
 use App\Form\RegistrationFormType;
+use App\Security\EmailVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,12 +20,21 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class MainController extends AbstractController
 {
+
+    private EmailVerifier $emailVerifier;
+
+    public function __construct(EmailVerifier $emailVerifier){
+        $this->emailVerifier = $emailVerifier;
+    }
     #[Route('/', name: 'app_main')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function index(EntityManagerInterface $entityManager): Response
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(["email"=>$this->getUser()->getUserIdentifier()]);
         $today = new \DateTime();
+        $user->setLastConnection($today);
+        $entityManager->persist($user);
+        $entityManager->flush();
         $today->setTime(0, 0, 0);
         $dateString = $today->format('Y-m-d');
 
@@ -74,6 +84,27 @@ class MainController extends AbstractController
             'user' => $user,
             'formUser'=>$formUser
         ]);
+    }
+
+    #[Route('/recovery-password', name: 'app_recovery_password')]
+    public function recoveryPassword(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        if($request->query->has('email')){
+            if(!$request->query->has('_send_email_token')) return $this->render("recovery-password.html.twig",['email'=>$request->query->get('email')]);
+            if($this->isCsrfTokenValid('_send_email_token_value',$request->query->get('_send_email_token'))){
+                if($entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$request->query->get('email')]) != null){
+                    $freshUser = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$request->query->get('email')]);
+                    $this->emailVerifier->send("app_recovery_password",$freshUser,);
+                }else{
+                    $this->addFlash('error', 'Cette email est introuvable dans notre base de données!');
+                    return $this->redirectToRoute('app_register');
+                }
+            }else{
+                $this->addFlash('error', 'Une erreur est survenue, merci de re-essayer...');
+                return $this->redirectToRoute('app_login');
+            }
+        }
+        return $this->redirectToRoute("app_main");
     }
 
     private function getAlertsByUser(EntityManagerInterface $entityManager, FreshUser $user){

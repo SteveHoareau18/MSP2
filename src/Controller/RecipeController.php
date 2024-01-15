@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Food;
 use App\Entity\FreshUser;
 use App\Entity\Recipe;
+use App\Entity\Refrigerator;
 use App\Form\RecipeFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -127,10 +128,13 @@ class RecipeController extends AbstractController
         $recipe->setOwner($user);
         $recipeForm = $this->createForm(RecipeFormType::class, $recipe);
         $recipeForm->handleRequest($request);
+        $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner'=>$user]);
+        $foods = empty($refrigerators)?array():$refrigerators[0]->getFoods();
         if ($recipeForm->isSubmitted() && $recipeForm->isValid()) {
+            dd($recipeForm);
             foreach ($user->getRecipes() as $legacyRecipe) {
                 if ($legacyRecipe->getName() == $recipe->getName()) {
-                    $this->addFlash('error', "Vous avez déjà un frigo portant se nom :)");
+                    $this->addFlash('error', "Vous avez déjà une recette portant ce nom :)");
                     return $this->redirectToRoute("app_main");
                 }
             }
@@ -141,7 +145,9 @@ class RecipeController extends AbstractController
         }
         return $this->render('recipe/add.html.twig', [
             'form' => $recipeForm,
-            'user' => $user
+            'user' => $user,
+            'refrigerators'=>$refrigerators,
+            'foods'=>$foods
         ]);
     }
 }

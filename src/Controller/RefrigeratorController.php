@@ -260,6 +260,11 @@ class RefrigeratorController extends AbstractController
                         $entityManager->flush();
                     }
                 }
+                foreach ($food->getRecipes() as $recipe){
+                    $recipe->removeFood($food);
+                    $entityManager->persist($recipe);
+                    $entityManager->flush();
+                }
                 $entityManager->remove($food);
                 $entityManager->flush();
                 if (floatval($request->query->get('withQuantity')) < 1 && floatval($request->query->get('withQuantity')) > 200) {
@@ -401,7 +406,7 @@ class RefrigeratorController extends AbstractController
             if ($refrigeratorForm->isSubmitted() && $refrigeratorForm->isValid()) {
                 foreach ($refrigerators as $legacyRefrigerator) {
                     if ($legacyRefrigerator->getName() == $refrigerator->getName()) {
-                        $this->addFlash('error', "Vous avez déjà un frigo portant se nom :)");
+                        $this->addFlash('error', "Vous avez déjà un frigo portant ce nom :)");
                         return $this->redirectToRoute("app_main");
                     }
                 }

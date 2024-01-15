@@ -110,14 +110,14 @@
                 {% for recipe in user.recipes %}
                     {% set number=number+1 %}
                     <div>
-                        <a href="{{ path('app_refrigerator',{'number':number}) }}" class="text-center font-bold capitalize">
+                        <a href="{{ path('app_recipe',{'number':number}) }}" class="text-center font-bold capitalize">
                             <img src="{{ asset('img/_c29e01f8-d811-4281-8513-79172f6bc93f.jpg') }}" alt="Frigo" height="512px" width="512px">
                             {{ refrigerator.name }}
                         </a>
                     </div>
                 {% endfor %}
                 {% if user.refrigerators|length != 2 %}
-                    <a href="{{ path('app_refrigerator_add') }}" class="font-semibold capitalize m-10">
+                    <a href="{{ path('app_recipe_add') }}" class="font-semibold capitalize m-10">
                         <div class="bg-primary rounded-2xl text-white p-10 h-full w-full flex items-center justify-center">
                             + AJOUTER UNE RECETTE
                         </div>
