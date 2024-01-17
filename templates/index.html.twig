@@ -49,6 +49,7 @@
                 </div>
                     <div class="space h-2"></div>
                 {% set i = 0 %}
+                {# ... #}
                 {% for alert in alerts %}
                     <div id="alert-{{ i }}" class="freshalert text-white px-6 py-4 border-0 rounded relative mb-2 bg-pink-500">
                         <span class="inline-block align-middle mr-8">
@@ -64,6 +65,7 @@
                     </script>
                     {% set i = i+1 %}
                 {% endfor %}
+                {# ... #}
             {% else %}
                 <p>Aucune alerte, c'est bon signe !</p>
             {% endif %}
@@ -105,25 +107,25 @@
             </div>
         {% endif %}
         <div class="text-center flex justify-around">
-            {% if user.recipes|length < 3 %}
                 {% set number = 0 %}
+            <div class="grid grid-cols-4">
                 {% for recipe in user.recipes %}
                     {% set number=number+1 %}
                     <div>
                         <a href="{{ path('app_recipe',{'number':number}) }}" class="text-center font-bold capitalize">
                             <img src="{{ asset('img/_c29e01f8-d811-4281-8513-79172f6bc93f.jpg') }}" alt="Frigo" height="512px" width="512px">
-                            {{ refrigerator.name }}
+                            {{ recipe.name }}
                         </a>
                     </div>
                 {% endfor %}
-                {% if user.refrigerators|length != 2 %}
+                {% if user.recipes|length < 10 %}
                     <a href="{{ path('app_recipe_add') }}" class="font-semibold capitalize m-10">
                         <div class="bg-primary rounded-2xl text-white p-10 h-full w-full flex items-center justify-center">
                             + AJOUTER UNE RECETTE
                         </div>
                     </a>
                 {% endif %}
-            {% endif %}
+            </div>
         </div>
     {% endif %}
     {% set number = 1 %}

@@ -94,9 +94,9 @@ class RegistrationController extends AbstractController
         $email = (new TemplatedEmail())
             ->from(new Address('no-reply@fresh.app', 'Fresh Support !'))
             ->to($user->getEmail())
-            ->subject('Please Confirm your Email')
+            ->subject('Activer votre compte Fresh !')
             ->htmlTemplate('confirmation_email.html.twig')
-            ->context(['url' => $this->generateUrl('app_verify_email', [], UrlGeneratorInterface::ABSOLUTE_URL), 'token' => $legacyToken]);
+            ->context(['user'=>$user,'url' => $this->generateUrl('app_verify_email', [], UrlGeneratorInterface::ABSOLUTE_URL), 'token' => $legacyToken]);
         $twigBodyRenderer->render($email);
         $this->emailVerifier->send('app_verify_email', $user,
             $email
@@ -136,7 +136,7 @@ class RegistrationController extends AbstractController
             $email = (new TemplatedEmail())
                 ->from(new Address('no-reply@fresh.app', 'Fresh Support !'))
                 ->to($user->getEmail())
-                ->subject('Votre compte est maintenant actif !')
+                ->subject('Votre compte Fresh est maintenant actif !')
                 ->htmlTemplate('success_confirmation_email.html.twig');
             $twigBodyRenderer->render($email);
             $this->emailVerifier->send('app_verify_email', $user,

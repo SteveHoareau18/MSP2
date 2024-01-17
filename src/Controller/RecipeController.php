@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Food;
+use App\Entity\FoodRecipeInRefrigerator;
+use App\Entity\FoodRecipeNotInRefrigerator;
 use App\Entity\FreshUser;
 use App\Entity\Recipe;
 use App\Entity\Refrigerator;
@@ -23,19 +25,26 @@ class RecipeController extends AbstractController
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         $recipes = $entityManager->getRepository(Recipe::class)->findBy(['owner' => $user->getId()]);
         if (!empty($recipes)) {
-            if($number < 1 || $number > 2){
-                return $this->redirectToRoute("app_main");
-            }
             $recipe = $recipes[$number - 1];
             if ($recipe == null) {
                 return $this->redirectToRoute("app_recipe", ["number" => 1]);
             }
 
-
+            $ingredients = array();
+            foreach ($recipe->getFoodRecipeNotInRefrigerators() as $foodNotInRefrigerator){
+                array_push($ingredients,$foodNotInRefrigerator);
+            }
+            foreach ($recipe->getFoodRecipeInRefrigerators() as $food){
+                array_push($ingredients,$food);
+            }
+            $recipeForm = $this->createForm(RecipeFormType::class,$recipe);
+            $recipeForm->handleRequest($request);
             return $this->render('recipe/index.html.twig', [
                 'recipe' => $recipe,
                 'number' => $number,
                 'user' => $user,
+                'ingredients'=>$ingredients,
+                'recipeForm'=>$recipeForm
             ]);
         } else {
             $this->addFlash("error", "Une erreur est survenue");
@@ -103,17 +112,17 @@ class RecipeController extends AbstractController
         }
         $legacyName = $recipe->getName();
         if ($request->query->has('token') && $this->isCsrfTokenValid('manual-delete', $request->query->get('token'))) {
-            foreach ($recipe->getAlerts() as $alert) {
-                $entityManager->remove($alert);
+            foreach ($recipe->getFoodRecipeInRefrigerators() as $foodRecipeInRefrigerator){
+                $entityManager->remove($foodRecipeInRefrigerator);
                 $entityManager->flush();
             }
-            foreach ($recipe->getFoods() as $food) {
-                $entityManager->remove($food);
+            foreach ($recipe->getFoodRecipeNotInRefrigerators() as $foodRecipeNotInRefrigerator){
+                $entityManager->remove($foodRecipeNotInRefrigerator);
                 $entityManager->flush();
             }
             $entityManager->remove($recipe);
             $entityManager->flush();
-            $this->addFlash('success', 'Votre frigo ' . $legacyName . ' a été supprimé !');
+            $this->addFlash('success', 'Votre recette ' . $legacyName . ' a été supprimé !');
         }
 
         return $this->redirectToRoute("app_main");
@@ -131,16 +140,80 @@ class RecipeController extends AbstractController
         $refrigerators = $entityManager->getRepository(Refrigerator::class)->findBy(['owner'=>$user]);
         $foods = empty($refrigerators)?array():$refrigerators[0]->getFoods();
         if ($recipeForm->isSubmitted() && $recipeForm->isValid()) {
-            dd($recipeForm);
+            $recipe->setCreateDate(new \DateTime("now"));
+            $recipe->setOwner($user);
+
+            $recipefoodsArr = explode("\r\n",$request->request->get('recipefoods'));
+            array_push($recipefoodsArr,"");
+//            dd($recipefoodsArr);
+
+            $checkerFood = null;
+            foreach ($recipefoodsArr as $recipefoods){
+                $defaultQuantity = 1;
+                $defaultUnit = "pincée(s)";
+                if($recipefoods == ""){
+                    $existFood = false;
+                    foreach($user->getRefrigerators() as $refrigerator){
+                        foreach ($refrigerator->getFoods() as $food){
+                            if($food->getName() == $checkerFood->getName()){
+                                $foodRecipeInRefrigerator = new FoodRecipeInRefrigerator();
+                                $foodRecipeInRefrigerator->setRefrigerator($refrigerator);
+                                $foodRecipeInRefrigerator->setFood($food);
+                                $foodRecipeInRefrigerator->setQuantity($checkerFood->getQuantity());
+                                $foodRecipeInRefrigerator->setUnit($checkerFood->getUnit());
+                                $recipe->addFoodRecipeInRefrigerator($foodRecipeInRefrigerator);
+                                $entityManager->persist($foodRecipeInRefrigerator);
+                                $entityManager->flush();
+                                $existFood = true;
+                                break;
+                            }
+                        }
+                        if($existFood) break;
+                    }
+                    if(!$existFood){
+                        $foodsCanBe = $entityManager->getConnection()->prepare("SELECT * FROM food INNER JOIN refrigerator ON food.refrigerator_id = refrigerator.id WHERE food.name LIKE :foodName AND refrigerator.owner_id = :ownerId");
+                        $foodsCanBe = $foodsCanBe->executeQuery(['foodName' => $checkerFood->getName(), 'ownerId' => $user->getId()])->fetchAllAssociative();
+                        //TODO test avec choco
+                        $checkerFood->setCanBeRegroup(!empty($foodsCanBe));
+                        $recipe->addFoodRecipeNotInRefrigerator($checkerFood);
+                        $entityManager->persist($checkerFood);
+                        $entityManager->flush();
+                    }
+                    $checkerFood = null;
+                    continue;
+                }
+                if($checkerFood == null){
+                    $checkerFood = new FoodRecipeNotInRefrigerator();
+                    if(array_key_exists(0, explode(" ",$recipefoods))){
+                        $defaultQuantity = floatval(explode(" ",$recipefoods)[0]);
+                    }
+                    if($defaultQuantity == 0) $defaultQuantity = 1;
+                    $checkerFood->setQuantity($defaultQuantity);
+                    if(array_key_exists(1, explode(" ",$recipefoods))){
+                        $defaultUnit = explode(" ",$recipefoods)[1];
+                    }
+                    $checkerFood->setUnit($defaultUnit);
+                    $checkerFood->setName($recipefoods);
+                }else {
+                    if (array_key_exists(0, explode(" ",$recipefoods)) && explode(" ", $recipefoods)[0] == "de") {
+                        $name = substr($recipefoods, 3);
+                    } else {
+                        $name = $recipefoods;
+                    }
+                    $checkerFood->setName($name);
+                }
+            }
+//            dd($recipe);
             foreach ($user->getRecipes() as $legacyRecipe) {
-                if ($legacyRecipe->getName() == $recipe->getName()) {
+                if ($legacyRecipe->getName() == $recipe->getName() && $legacyRecipe->getId() != $recipe->getId()) {
                     $this->addFlash('error', "Vous avez déjà une recette portant ce nom :)");
                     return $this->redirectToRoute("app_main");
                 }
             }
+
             $entityManager->persist($recipe);
             $entityManager->flush();
-            $this->addFlash("success", "Vous avez ajouté un nouveau frigo !");
+            $this->addFlash("success", "Vous avez ajouté une nouvelle recette ! ");
             return $this->redirectToRoute("app_recipe", ["number" => count($entityManager->getRepository(Recipe::class)->findBy(['owner'=>$user])) + 1]);
         }
         return $this->render('recipe/add.html.twig', [

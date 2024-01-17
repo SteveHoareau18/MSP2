@@ -9,21 +9,13 @@
         <div class="mt-10">
             {{ form_start(form) }}
                 {{ form_row(form.name) }}
-            <label for="foodId">Selectionnez un aliment</label>
-            {% for refrigerator in refrigerators %}
-                <a href="">{{ refrigerator.name }}</a>
-            {% endfor %}
-            <input type="text" id="foodId" name="foodId" list="foodList">
-
-            <datalist id="foodList">
-                {% for food in foods %}
-                    <option value="{{ food.name }}">
-                {% endfor %}
-            </datalist>
+            <label for="recipefoods">Entrez les aliments de votre recette</label><br>
+            <textarea name="recipefoods" class="textarea bg-white border-gray-500"></textarea>
                 {{ form_row(form.submit) }}
             {{ form_end(form) }}
         </div>
     </div>
+
 
     <div class="text-center flex justify-center mt-52">
         <a href="{{ path('app_main') }}"><button class="btn btn-info text-white"><< RETOUR</button></a>

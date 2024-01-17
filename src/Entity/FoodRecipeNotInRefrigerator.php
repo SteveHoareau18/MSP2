@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: FoodNotInRefrigeratorRepository::class)]
-class FoodNotInRefrigerator
+class FoodRecipeNotInRefrigerator
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -21,15 +21,18 @@ class FoodNotInRefrigerator
     #[ORM\Column]
     private ?int $quantity = null;
 
-    #[ORM\Column(length: 4, nullable: true)]
+    #[ORM\Column(length: 20, nullable: true)]
     private ?string $unit = null;
 
-    #[ORM\ManyToMany(targetEntity: Recipe::class, mappedBy: 'foodsNotInRefrigerator')]
-    private Collection $recipes;
+    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'foodNotInRefrigerators')]
+    private ?Recipe $recipe = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $canBeRegroup = null;
 
     public function __construct()
     {
-        $this->recipes = new ArrayCollection();
+
     }
 
     public function getId(): ?int
@@ -73,29 +76,38 @@ class FoodNotInRefrigerator
         return $this;
     }
 
-    /**
-     * @return Collection<int, Recipe>
-     */
-    public function getRecipes(): Collection
+    public function getOwner(): ?FreshUser
     {
-        return $this->recipes;
+        return $this->owner;
     }
 
-    public function addRecipe(Recipe $recipe): static
+    public function setOwner(?FreshUser $owner): static
     {
-        if (!$this->recipes->contains($recipe)) {
-            $this->recipes->add($recipe);
-            $recipe->addFoodsNotInRefrigerator($this);
-        }
+        $this->owner = $owner;
 
         return $this;
     }
 
-    public function removeRecipe(Recipe $recipe): static
+    public function getRecipe(): ?Recipe
     {
-        if ($this->recipes->removeElement($recipe)) {
-            $recipe->removeFoodsNotInRefrigerator($this);
-        }
+        return $this->recipe;
+    }
+
+    public function setRecipe(?Recipe $recipe): static
+    {
+        $this->recipe = $recipe;
+
+        return $this;
+    }
+
+    public function isCanBeRegroup(): ?bool
+    {
+        return $this->canBeRegroup;
+    }
+
+    public function setCanBeRegroup(?bool $canBeRegroup): static
+    {
+        $this->canBeRegroup = $canBeRegroup;
 
         return $this;
     }
