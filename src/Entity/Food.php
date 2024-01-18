@@ -32,12 +32,9 @@ class Food
     #[ORM\JoinColumn(nullable: false)]
     private ?Refrigerator $refrigerator = null;
 
-    #[ORM\ManyToMany(targetEntity: Recipe::class, mappedBy: 'foods')]
-    private Collection $recipes;
-
     public function __construct()
     {
-        $this->recipes = new ArrayCollection();
+
     }
 
     public function getId(): ?int
@@ -101,33 +98,6 @@ class Food
     public function setRefrigerator(?Refrigerator $refrigerator): static
     {
         $this->refrigerator = $refrigerator;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Recipe>
-     */
-    public function getRecipes(): Collection
-    {
-        return $this->recipes;
-    }
-
-    public function addRecipe(Recipe $recipe): static
-    {
-        if (!$this->recipes->contains($recipe)) {
-            $this->recipes->add($recipe);
-            $recipe->addFood($this);
-        }
-
-        return $this;
-    }
-
-    public function removeRecipe(Recipe $recipe): static
-    {
-        if ($this->recipes->removeElement($recipe)) {
-            $recipe->removeFood($this);
-        }
 
         return $this;
     }
