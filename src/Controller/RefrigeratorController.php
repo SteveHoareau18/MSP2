@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Food;
+use App\Entity\FoodRecipeInRefrigerator;
 use App\Entity\FoodRecipeNotInRefrigerator;
 use App\Entity\FreshUser;
 use App\Entity\Refrigerator;
@@ -29,6 +30,7 @@ class RefrigeratorController extends AbstractController
             if($number < 1 || $number > 2){
                 return $this->redirectToRoute("app_main");
             }
+            if(!key_exists($number-1,$refrigerators)) return $this->redirectToRoute("app_main");
             $refrigerator = $refrigerators[$number - 1];
             if ($refrigerator == null) {
                 return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -59,12 +61,6 @@ class RefrigeratorController extends AbstractController
                 $food = $entityManager->getRepository(Food::class)->find($request->query->get('foodId'));
                 if ($food != null) {
                     $name = $food->getName();
-                    foreach ($food->getRefrigerator()->getAlerts() as $alert) {
-                        if ($alert->getFood()->getId() == $food->getId()) {
-                            $entityManager->remove($alert);
-                            $entityManager->flush();
-                        }
-                    }
                     $entityManager->remove($food);
                     $entityManager->flush();
                     $this->addFlash('success', 'L\'aliment ' . $name . ' a été consommé ou supprimé !');
@@ -98,6 +94,7 @@ class RefrigeratorController extends AbstractController
         if($number < 1 || $number > 2){
             return $this->redirectToRoute("app_main");
         }
+        if(!key_exists($number-1,$refrigerators)) return $this->redirectToRoute("app_refrigerator",['number'=>$number-2]);
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -179,6 +176,7 @@ class RefrigeratorController extends AbstractController
         if($number < 1 || $number > 2){
             return $this->redirectToRoute("app_main");
         }
+        if(!key_exists($number-1,$refrigerators)) return $this->redirectToRoute("app_refrigerator",['number'=>$number-2]);
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -194,12 +192,6 @@ class RefrigeratorController extends AbstractController
 
         if ($request->request->has('_remove_' . $id . '_token') && $this->isCsrfTokenValid('_remove_food_refrigerator_token_value', $request->request->get('_remove_' . $id . '_token'))) {
             $name = $food->getName();
-            foreach ($food->getRefrigerator()->getAlerts() as $alert) {
-                if ($alert->getFood()->getId() === $food->getId()) {
-                    $entityManager->remove($alert);
-                    $entityManager->flush();
-                }
-            }
             $entityManager->remove($food);
             $entityManager->flush();
             $this->addFlash('success', "L'aliment " . $name . " a été consommé ou supprimé !");
@@ -222,6 +214,7 @@ class RefrigeratorController extends AbstractController
         if($number < 1 || $number > 2){
             return $this->redirectToRoute("app_main");
         }
+        if(!key_exists($number-1,$refrigerators)) return $this->redirectToRoute("app_refrigerator",['number'=>$number-2]);
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -253,17 +246,6 @@ class RefrigeratorController extends AbstractController
                 if($newFood->getRefrigerator()->getId() != $refrigerator->getId()){
                     $this->addFlash('error', 'Une erreur est survenue...');
                     return $this->redirectToRoute("app_refrigerator", ['number' => $number]);
-                }
-                foreach ($food->getRefrigerator()->getAlerts() as $alert){
-                    if($alert->getFood()->getId() == $food->getId()){
-                        $entityManager->remove($alert);
-                        $entityManager->flush();
-                    }
-                }
-                foreach ($food->getRecipes() as $recipe){
-                    $recipe->removeFood($food);
-                    $entityManager->persist($recipe);
-                    $entityManager->flush();
                 }
                 $entityManager->remove($food);
                 $entityManager->flush();
@@ -357,6 +339,7 @@ class RefrigeratorController extends AbstractController
         if($number < 1 || $number > 2){
             return $this->redirectToRoute("app_main");
         }
+        if(!key_exists($number-1,$refrigerators)) return $this->redirectToRoute("app_refrigerator",['number'=>$number-2]);
         $refrigerator = $refrigerators[$number - 1];
         if ($refrigerator == null) {
             return $this->redirectToRoute("app_refrigerator", ["number" => 1]);
@@ -366,19 +349,6 @@ class RefrigeratorController extends AbstractController
             foreach ($refrigerator->getAlerts() as $alert) {
                 $entityManager->remove($alert);
                 $entityManager->flush();
-            }
-            foreach ($refrigerator->getOwner()->getRecipes() as $recipe){
-                foreach ($refrigerator->getFoods() as $food) {
-                    $recipe->removeFood($food);
-                    if($recipe->getFoods()->contains($food)) {
-                        $foodNotInRefrigerator = new FoodRecipeNotInRefrigerator();
-                        $foodNotInRefrigerator->setName($food->getName());
-                        $foodNotInRefrigerator->setQuantity($food->getQuantity());
-                        $foodNotInRefrigerator->addRecipe($recipe);
-                        $entityManager->persist($foodNotInRefrigerator);
-                        $entityManager->flush();
-                    }
-                }
             }
             foreach ($refrigerator->getFoods() as $food) {
                 $entityManager->remove($food);

@@ -26,10 +26,10 @@ class Refrigerator
     #[ORM\JoinColumn(nullable: false)]
     private ?FreshUser $owner = null;
 
-    #[ORM\OneToMany(mappedBy: 'refrigerator', targetEntity: Food::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'refrigerator', targetEntity: Food::class, cascade: ['remove'])]
     private Collection $foods;
 
-    #[ORM\OneToMany(mappedBy: 'refrigerator', targetEntity: Alert::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'refrigerator', targetEntity: Alert::class)]
     private Collection $alerts;
 
     public function __construct()

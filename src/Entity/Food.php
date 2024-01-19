@@ -32,6 +32,13 @@ class Food
     #[ORM\JoinColumn(nullable: false)]
     private ?Refrigerator $refrigerator = null;
 
+    #[ORM\OneToMany(mappedBy: 'food', targetEntity: Alert::class, cascade: ['remove'])]
+    private Collection $alerts;
+
+    #[ORM\OneToMany(mappedBy: 'food', targetEntity: FoodRecipeInRefrigerator::class, cascade: ['remove'])]
+    private Collection $foodRecipeInRefrigerator;
+
+
     public function __construct()
     {
 

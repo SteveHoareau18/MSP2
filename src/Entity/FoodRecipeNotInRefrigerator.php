@@ -24,7 +24,7 @@ class FoodRecipeNotInRefrigerator
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $unit = null;
 
-    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'foodNotInRefrigerators')]
+    #[ORM\ManyToOne(cascade: ['persist'])]
     private ?Recipe $recipe = null;
 
     #[ORM\Column(nullable: true)]
@@ -72,18 +72,6 @@ class FoodRecipeNotInRefrigerator
     public function setUnit(?string $unit): static
     {
         $this->unit = $unit;
-
-        return $this;
-    }
-
-    public function getOwner(): ?FreshUser
-    {
-        return $this->owner;
-    }
-
-    public function setOwner(?FreshUser $owner): static
-    {
-        $this->owner = $owner;
 
         return $this;
     }

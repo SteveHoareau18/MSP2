@@ -13,18 +13,18 @@ class FoodRecipeInRefrigerator
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Refrigerator $refrigerator = null;
 
     #[ORM\Column]
     private ?int $quantity = null;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Food $food = null;
 
-    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'foodRecipeInRefrigerators')]
+    #[ORM\ManyToOne(cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Recipe $recipe = null;
 

@@ -78,15 +78,15 @@
                 <p>Vous n'avez pas de frigo, donc pas d'aliments !</p>
             </div>
         {% endif %}
-        <div class="text-center flex justify-around">
+        <div class="text-center flex justify-around p-4" style="background-image: url('{{ asset('img/food-background-wallpaper-19.jpg') }}');background-size: cover;">
             {% if user.refrigerators|length < 3 %}
                 {% set number = 0 %}
                 {% for refrigerator in user.refrigerators %}
                     {% set number=number+1 %}
                     <div>
-                        <a href="{{ path('app_refrigerator',{'number':number}) }}" class="text-center font-bold capitalize">
+                        <a href="{{ path('app_refrigerator',{'number':number}) }}" class="text-center font-bold capitalize" style="opacity: 0.99;">
                             <img src="{{ asset('img/_fc63166d-6d43-4a34-a186-eb67efa4d00d.jpg') }}" alt="Frigo" height="512px" width="512px">
-                            {{ refrigerator.name }}
+                            <span class="badge bg-white">{{ refrigerator.name }}</span>
                         </a>
                     </div>
                 {% endfor %}
@@ -99,14 +99,14 @@
                 {% endif %}
             {% endif %}
         </div>
-        <h2 class="text-center bold text-2xl">Vos recettes</h2>
+        <h2 class="text-center bold text-2xl mt-5">Vos recettes</h2>
         <div class="space h-5"></div>
         {% if user.recipes|length == 0 %}
             <div class="text-center">
                 <p>Vous n'avez pas de recettes :'(</p>
             </div>
         {% endif %}
-        <div class="text-center flex justify-around">
+        <div class="text-center flex justify-center">
                 {% set number = 0 %}
             <div class="grid grid-cols-4 gap-4 m-2">
                 {% for recipe in user.recipes %}
@@ -114,7 +114,7 @@
                     <div>
                         <a href="{{ path('app_recipe',{'number':number}) }}" class="text-center font-bold capitalize">
                             <img src="{{ asset('img/_c29e01f8-d811-4281-8513-79172f6bc93f.jpg') }}" alt="Frigo" height="512px" width="512px">
-                            {{ recipe.name }}
+                            <span class="badge bg-white">{{ recipe.name }}</span>
                         </a>
                     </div>
                 {% endfor %}
@@ -124,6 +124,8 @@
                             + AJOUTER UNE RECETTE
                         </div>
                     </a>
+                {% else %}
+                    <span class="badge badge-error text-white">Vous ne pouvez pas rajouter plus de 10 recettes.</span>
                 {% endif %}
             </div>
         </div>

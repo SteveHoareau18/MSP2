@@ -29,10 +29,10 @@ class Recipe
     #[ORM\JoinColumn(nullable: false)]
     private ?FreshUser $owner = null;
 
-    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: FoodRecipeNotInRefrigerator::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: FoodRecipeNotInRefrigerator::class, cascade: ['remove'])]
     private Collection $foodRecipeNotInRefrigerators;
 
-    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: FoodRecipeInRefrigerator::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: FoodRecipeInRefrigerator::class, cascade: ['remove'])]
     private Collection $foodRecipeInRefrigerators;
 
     public function __construct()
