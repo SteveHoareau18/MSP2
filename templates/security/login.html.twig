@@ -4,28 +4,37 @@
 
 {% block body %}
     <div class="text-center">
-    <form method="post">
-        {% if error %}
-            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-        {% endif %}
+        <form method="post">
+            {% if error %}
+                <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+            {% endif %}
 
-        <h1 class="font-bold text-3xl mb-5">Connexion</h1>
-        <label for="inputEmail">E-mail : </label>
-        <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="ml-1 input bg-white border-gray-500"
-               autocomplete="email" required autofocus><br>
-        <label for="inputPassword">Mot de passe : </label>
-        <input type="password" name="password" id="inputPassword" class="ml-1 input bg-white border-gray-500 mt-5" autocomplete="current-password"
-               required><br>
+            <h1 class="font-bold text-3xl mb-5">Connexion</h1>
+            <label for="inputEmail">E-mail : </label>
+            <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="ml-1 input bg-white border-gray-500"
+                autocomplete="email" required autofocus><br>
+            <label for="inputPassword">Mot de passe : </label>
+            <input type="password" name="password" id="inputPassword" class="ml-1 input bg-white border-gray-500 mt-5" autocomplete="current-password"
+                required><br>
 
-        <input type="hidden" name="_csrf_token"
-               value="{{ csrf_token('authenticate') }}"
-        >
+            <input type="hidden" name="_csrf_token"
+                value="{{ csrf_token('authenticate') }}"
+            >
 
-        <button class="btn btn-lg btn-primary mt-5 mb-5" type="submit">
-            ENTRONS !
-        </button>
-    </form>
-    <p>Pas encore de compte ? <a href="{{ path('app_register') }}" class="link">Créer un compte</a></p>
-    <p>Mot de passe oublié ? <a href="#" class="link">Retrouver mon mot de passe</a></p>
+            <button class="btn btn-lg btn-primary mt-5 mb-5" type="submit">
+                ENTRONS !
+            </button>
+        </form>
+        <p>Pas encore de compte ? <a href="{{ path('app_register') }}" class="link">Créer un compte</a></p>
+        <p>Mot de passe oublié ? <a href="#" onclick="coming_soon.showModal();" class="link">Retrouver mon mot de passe</a></p>
+        <dialog id="coming_soon" class="modal">
+            <div class="modal-box bg-white">
+                <h3 class="font-bold text-xl">Cette action est bientôt disponible...</b></h3>
+                <p>Pour le moment merci de nous contacter en cliquant <a href="mailto:recover@fresh.app" class="link badge badge-info text-white">ici</a> avec votre adresse mail utilisée, et en nous donnant votre nom et prénom.</p>
+                <div class="flex justify-center mt-2">
+                    <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white text-center">FERMER</a>
+                </div>
+            </div>
+        </dialog>
     </div>
 {% endblock %}

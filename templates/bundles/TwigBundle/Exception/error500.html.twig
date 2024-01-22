@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="text-center m-5">
+    <h1>Une erreur est survenue !</h1>
+
+    <p>
+        Merci de contacter le service <a class="link badge badge-success text-white" href="mailto:contact@fresh.app">ici</a>.
+        Code erreur (à transmettre à notre équipe): {{ 'now'|date('dmYHis') }}
+    </p>
+</div>
+{% endblock %}

@@ -49,7 +49,7 @@ class FoodFormType extends AbstractType
                 ],
             ])
             ->add('submit',SubmitType::class, [
-                'label'=>"Ajouter",
+                'label'=>"AJOUTER",
                 'attr'=>['class'=>'btn btn-primary text-white mt-5 w-52']
             ])
         ;

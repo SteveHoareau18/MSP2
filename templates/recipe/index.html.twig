@@ -1,0 +1,142 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fresh ! Recette {{ recipe.name }}{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
+        <h2 class="capitalize font-bold text-2xl">Pour faire la recette {{ recipe.name }}:</h2>
+    </div>
+    {% if ingredients|length == 0 %}
+        <p class="text-center m-10">Il n'y a pas d'ingrédient !</p>
+    {% else %}
+        <div class="space h-5"></div>
+        <h3 class="text-center bg-pink-500 text-white font-semibold text-xl rounded">Voici les ingrédients nécessaires !</h3>
+        <div class="space h-5"></div>
+        <div class="ml-7 mr-7 grid grid-cols-4 gap-20">
+        </div>
+    {% endif %}
+    <div class="grid grid-cols-1">
+        <div class="text-center flex justify-center">
+            <ul class="text-center ml-44">
+                {% for ingredient in ingredients %}
+                    <li class="grid grid-cols-2 mt-7 mb-4 gap-4">
+                        <p>
+                            {% if ingredient.refrigerator is defined %}
+                                {{ ingredient.quantity }} {{ ingredient.food.name }}  <span class="badge badge-info text-white">=> Dans le frigo {{ ingredient.refrigerator.name }}</span>
+                            {% else %}
+                                {{ ingredient.quantity }} {% if ingredient.unit is defined %}{{ ingredient.unit }}{% endif %} {{ ingredient.name }}
+                            {% endif %}
+                        </p>
+                        <p class="justify-center inline-block">
+                            <a href="#" onclick="_modify_{{ ingredient.id }}.showModal()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+                                </svg>
+                            </a>
+                            <a href="#" onclick="_remove_{{ ingredient.id }}.showModal()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                </svg>
+                            </a>
+                        </p>
+                    </li>
+                    <div class="divider w-7/12"></div>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="flex justify-center mt-5">
+        <a href="{{ path('app_recipe_add_food',{'number':number}) }}" class="font-semibold capitalize h-0 text-center">
+            <button class="bg-primary rounded-2xl text-white p-2">+ AJOUTER UN INGREDIENT</button>
+        </a>
+    </div>
+    <div class="text-center flex justify-center mt-24">
+        <a href="#" onclick="coming_soon.showModal()" class="btn bg-yellow-400 text-white m-5">CUISINER</a>
+    </div>
+    <div class="text-center flex justify-center mt-24">
+        <a href="#" onclick="_modify_modal_id.showModal()" class="btn btn-warning text-white m-5">MODIFIER</a>
+        <a href="#" onclick="_remove_modal_id.showModal()" class="btn btn-error text-white m-5">SUPPRIMER</a>
+    </div>
+    <div class="text-center flex justify-center mt-5">
+        <a href="{{ path('app_main') }}" class="btn btn-info text-white"><< RETOUR</a>
+    </div>
+
+    <dialog id="coming_soon" class="modal">
+        <div class="modal-box bg-white">
+            <h3 class="font-bold text-xl">{{ user.firstname }}, cette action est bientôt disponible...</b></h3>
+            <div class="flex justify-center mt-2">
+                <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white text-center">FERMER</a>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="_modify_modal_id" class="modal">
+        <div class="modal-box bg-white">
+            <h3 class="font-bold text-xl">{{ user.firstname }}, remplissez le formulaire pour modifier <b class="font-semibold capitalize text-lg">{{ recipe.name }}</b></h3>
+            <div class="modal-action text-left flex justify-center">
+                {{ form_start(recipeForm) }}
+                {{ form_row(recipeForm.name) }}
+                <div class="flex justify-center">
+                    {{ form_row(recipeForm.submit, {'label': 'METTRE A JOUR','attr':{'class':'btn btn-warning text-white mt-5'}}) }}
+                </div>
+                {{ form_end(recipeForm) }}
+            </div>
+            <div class="flex justify-center mt-2">
+                <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white text-center">ANNULER</a>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="_remove_modal_id" class="modal">
+        <div class="modal-box bg-white">
+            <h3 class="font-bold text-xl">Voulez-vous vraiment supprimer <b class="font-semibold capitalize text-lg">{{ recipe.name }}</b> <span class="text-error">et tous ses aliments !</span></h3>
+            <div class="modal-action text-left flex justify-center">
+                <a href="{{ path('app_recipe_remove',{'number':number}) }}?token={{ csrf_token('manual-delete') }}" class="btn btn-error text-white">SUPPRIMER</a>
+            </div>
+            <div class="flex justify-center mt-2">
+                <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white text-center">ANNULER</a>
+            </div>
+        </div>
+    </dialog>
+
+    {% for food in ingredients %}
+        <dialog id="_remove_{{ food.id }}" class="modal">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg">Supprimer un aliment</h3>
+                <p class="py-4">Voulez-vous vraiment <b class="underline">supprimer</b> l'aliment <b class="font-bold capitalize">{% if food.refrigerator is defined %}{{ food.food.name }}{% else %}{{ food.name }}{% endif %}</b> dans la recette <b class="font-bold capitalize">{{ recipe.name }}</b> ?</p>
+                <div class="modal-action">
+                    <form method="post" action="{{ path('app_recipe_food_remove',{'number':number,'id':food.id}) }}">
+                        <input hidden="" name="_remove_{{ food.id }}_token" value="{{ csrf_token('_remove_food_recipe_token_value') }}">
+                        <button class="btn btn-error">SUPPRIMER</button>
+                    </form>
+                    <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white">FERMER</a>
+                </div>
+            </div>
+        </dialog>
+    {% endfor %}
+    {% for i in 0..foodFormArr|length-1 %}
+        {% set id = foodFormArr[i] %}
+        <dialog id="_modify_{{ id }}" class="modal">
+            <div class="modal-box bg-white">
+                <h3 class="font-bold text-lg text-center">Modifier un aliment dans la recette {{recipe.name}}</h3>
+                <div class="modal-action text-left flex justify-center">
+                    {% set form = legacyFoodFormArr[i].createView %}
+                    {{ form_start(form, {'action':path('app_recipe_food_modify',{'number':number,'id':id})}) }}
+                    <input hidden="" name="_modify_{{ id }}_token" value="{{ csrf_token('_modify_food_recipe_token_value') }}">
+                    {{ form_row(form.quantity) }}
+                    {{ form_row(form.unit) }}
+                    {{ form_row(form.name) }}
+                    <div class="flex justify-center">
+                        {{ form_row(form.submit, {'label': 'METTRE A JOUR','attr':{'class':'btn btn-warning text-white mt-5'}}) }}
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+                <div class="flex justify-center mt-2">
+                    <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white text-center">FERMER</a>
+                </div>
+            </div>
+        </dialog>
+    {% endfor %}
+{% endblock %}

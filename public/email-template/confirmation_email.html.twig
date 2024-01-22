@@ -1,10 +1,37 @@
-<h1>Hi! Please confirm your email!</h1>
-
-<p>
-    Please confirm your email address by clicking the following link: <br><br>
-    <a href="{{ url ~ "?token=" ~ token }}">Confirm my Email</a>.
-</p>
-
-<p>
-    Cheers!
-</p>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fresh !{% endblock %}</title>
+    <link rel="icon"
+          href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
+    <link href="/assets/styles/app.css" type="text/css">
+</head>
+<body class="theme-mytheme bg-white">
+    <nav class="px-4 lg:px-6 py-2.5">
+        <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
+            <a href="http://localhost:8000" class="flex items-center">
+                <h1 class="self-center text-7xl italic font-bold text-success">Fresh !</h1>
+            </a>
+        </div>
+    </nav>
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstName }},</h1>
+        <div class="mt-5">
+            <p>
+                Vous venez de créer un compte sur <a href="http://localhost:8000" class="link">Fresh !</a>
+            </p>
+            <p>
+                Vous devez confirmer votre compte en cliquant <a href="{{ url ~ "?token=" ~ token }}" class="link text-blue-700">ici</a>
+            </p>
+        </div>
+        <div class="mt-10">
+            <p class="text-sm">Si ce n'est pas vous, merci de nous contacter ! <a href="mailto:contact@fresh.app">contact@fresh.app</a></p>
+        </div>
+        <div class="text-center mt-52">
+            <p>De l'ekip de Fresh !</p>
+        </div>
+    </div>
+</body>
+</html>

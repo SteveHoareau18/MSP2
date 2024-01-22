@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fresh ! Nouveau Frigo{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h1 class="font-bold text-3xl">{{ user.firstname }},</h1>
+        {% if recipe is not defined %}
+        <h3 class="text-xl">Remplissez le formulaire pour ajouter une recette !</h3>
+        <div class="mt-10">
+            {{ form_start(form) }}
+                {{ form_row(form.name, {'attr':{'placeholder':'Ma nouvelle recette !'}}) }}
+            <p class="mt-5">Entrez les aliments de votre recette :</p><br>
+            <label for="quantity">Quantité :
+                <input type="number" name="quantity" class="input border-gray-500 bg-white text-black" placeholder="1">
+            </label>
+            <label for="unit">Unité :
+                <input type="text" name="unit" class="input border-gray-500 bg-white text-black" placeholder="litre">
+            </label>
+            <label for="name">Nom :
+                <input type="text" name="name" class="input border-gray-500 bg-white text-black" placeholder="Lait">
+            </label>
+            <button type="submit" class="btn bg-black text-white" name="add-food">+</button>
+                {{ form_row(form.submit) }}
+            {{ form_end(form) }}
+        </div>
+        {% else %}
+            <h3 class="text-xl">Remplissez le formulaire pour ajouter un aliment dans votre recette <em>{{ recipe.name }}</em> !</h3>
+            <div class="mt-10">
+                <label for="recipe-name">Nom de la recette :
+                    <input type="text" name="recipe-name" value="{{ recipe.name }}" disabled>
+                </label>
+                <div class="space h-10"></div>
+                <p>Aliments déjà dans votre recette : </p>
+                {% for foodRecipe in allFoodsInRecipe %}
+                    - {{ foodRecipe.quantity }} {{ foodRecipe.unit }}
+                    {% if foodRecipe.food is defined %}
+                        {{ foodRecipe.food.name }}
+                        <span class="badge bg-info text-white">Dans le frigo {{ foodRecipe.food.refrigerator.name }}</span>
+                    {% else %}
+                        {{ foodRecipe.name }}
+                    {% endif %}
+                    <br>
+                {% endfor %}
+                <div class="space h-10"></div>
+                <p class="mt-5">Entrez les aliments de votre recette :</p><br>
+                <form action="{{ path('app_recipe_add_food',{'number':number}) }}" method="post">
+                    <label for="quantity">Quantité :
+                        <input type="number" name="quantity" class="input border-gray-500 bg-white text-black" placeholder="1" required>
+                    </label>
+                    <label for="unit">Unité :
+                        <input type="text" name="unit" class="input border-gray-500 bg-white text-black" placeholder="litre">
+                    </label>
+                    <label for="name">Nom :
+                        <input type="text" name="name" class="input border-gray-500 bg-white text-black" placeholder="Lait" required>
+                    </label>
+                    <button type="submit" class="btn bg-black text-white" name="add-food">+</button><br>
+                    <button type="submit" class="btn btn-success text-white">TERMINER D'AJOUTER</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+
+
+    <div class="text-center flex justify-center mt-52">
+        <a href="{{ path('app_recipe',{'number':number}) }}"><button class="btn btn-info text-white"><< RETOUR</button></a>
+    </div>
+{% endblock %}

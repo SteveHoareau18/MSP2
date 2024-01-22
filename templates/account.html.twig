@@ -51,7 +51,16 @@
         {% endif %}
         {{ form_end(formUser) }}
 
-        <a href="#" class="btn btn-error text-white"><button>SUPPRIMER DÉFINITIVEMENT MON COMPTE</button></a><br>
+        <a href="#" class="btn btn-error text-white" onclick="coming_soon.showModal();">SUPPRIMER DÉFINITIVEMENT MON COMPTE</a><br>
         <a href="{{ path('app_main') }}" class="btn btn-info text-white mt-5"><button><< RETOUR</button></a>
+
+        <dialog id="coming_soon" class="modal">
+            <div class="modal-box bg-white">
+                <h3 class="font-bold text-xl">{{ user.firstname }}, cette action est bientôt disponible...</b></h3>
+                <div class="flex justify-center mt-2">
+                    <a href="{{ path('app_fresh_account') }}" class="btn btn-info text-white text-center">FERMER</a>
+                </div>
+            </div>
+        </dialog>
     </div>
 {% endblock %}

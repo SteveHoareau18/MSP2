@@ -49,6 +49,7 @@
                 </div>
                     <div class="space h-2"></div>
                 {% set i = 0 %}
+                {# ... #}
                 {% for alert in alerts %}
                     <div id="alert-{{ i }}" class="freshalert text-white px-6 py-4 border-0 rounded relative mb-2 bg-pink-500">
                         <span class="inline-block align-middle mr-8">
@@ -64,6 +65,7 @@
                     </script>
                     {% set i = i+1 %}
                 {% endfor %}
+                {# ... #}
             {% else %}
                 <p>Aucune alerte, c'est bon signe !</p>
             {% endif %}
@@ -76,15 +78,15 @@
                 <p>Vous n'avez pas de frigo, donc pas d'aliments !</p>
             </div>
         {% endif %}
-        <div class="text-center flex justify-around">
+        <div class="text-center flex justify-around p-4" style="background-image: url('{{ asset('img/IMG_2619.jpg') }}');background-size: cover;">
             {% if user.refrigerators|length < 3 %}
                 {% set number = 0 %}
                 {% for refrigerator in user.refrigerators %}
                     {% set number=number+1 %}
                     <div>
-                        <a href="{{ path('app_refrigerator',{'number':number}) }}" class="text-center font-bold capitalize">
+                        <a href="{{ path('app_refrigerator',{'number':number}) }}" class="text-center font-bold capitalize" style="opacity: 0.99;">
                             <img src="{{ asset('img/_fc63166d-6d43-4a34-a186-eb67efa4d00d.jpg') }}" alt="Frigo" height="512px" width="512px">
-                            {{ refrigerator.name }}
+                            <span class="badge bg-white">{{ refrigerator.name }}</span>
                         </a>
                     </div>
                 {% endfor %}
@@ -97,33 +99,37 @@
                 {% endif %}
             {% endif %}
         </div>
-        <h2 class="text-center bold text-2xl">Vos recettes</h2>
+        <h2 class="text-center bold text-2xl mt-5">Vos recettes</h2>
         <div class="space h-5"></div>
-        {% if user.refrigerators|length == 0 %}
+        {% if user.recipes|length == 0 %}
             <div class="text-center">
-                <p>Vous n'avez pas de frigo, donc pas d'aliments !</p>
+                <p>Vous n'avez pas de recettes :'(</p>
             </div>
         {% endif %}
-        <div class="text-center flex justify-around">
-            {% if user.refrigerators|length < 3 %}
+        <div class="w-full" style="background-image: url('{{ asset('img/IMG_2620.png') }}');background-size: cover;">
+        <div class="text-center flex justify-center">
                 {% set number = 0 %}
-                {% for refrigerator in user.refrigerators %}
+            <div class="grid grid-cols-4 gap-4 m-2">
+                {% for recipe in user.recipes %}
                     {% set number=number+1 %}
                     <div>
-                        <a href="{{ path('app_refrigerator',{'number':number}) }}" class="text-center font-bold capitalize">
-                            <img src="{{ asset('img/_fc63166d-6d43-4a34-a186-eb67efa4d00d.jpg') }}" alt="Frigo" height="512px" width="512px">
-                            {{ refrigerator.name }}
+                        <a href="{{ path('app_recipe',{'number':number}) }}" class="text-center font-bold capitalize">
+                            <img src="{{ asset('img/_c29e01f8-d811-4281-8513-79172f6bc93f.jpg') }}" alt="Frigo" height="512px" width="512px">
+                            <span class="badge bg-white">{{ recipe.name }}</span>
                         </a>
                     </div>
                 {% endfor %}
-                {% if user.refrigerators|length != 2 %}
-                    <a href="{{ path('app_refrigerator_add') }}" class="font-semibold capitalize m-10">
+                {% if user.recipes|length < 10 %}
+                    <a href="{{ path('app_recipe_add') }}" class="font-semibold capitalize m-10">
                         <div class="bg-primary rounded-2xl text-white p-10 h-full w-full flex items-center justify-center">
-                            + AJOUTER UN FRIGO
+                            + AJOUTER UNE RECETTE
                         </div>
                     </a>
+                {% else %}
+                    <span class="badge badge-error text-white">Vous ne pouvez pas rajouter plus de 10 recettes.</span>
                 {% endif %}
-            {% endif %}
+            </div>
+        </div>
         </div>
     {% endif %}
     {% set number = 1 %}

@@ -22,19 +22,23 @@ class Recipe
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createDate = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastCookingDate = null;
 
     #[ORM\ManyToOne(inversedBy: 'recipes')]
     #[ORM\JoinColumn(nullable: false)]
     private ?FreshUser $owner = null;
 
-    #[ORM\ManyToMany(targetEntity: Food::class, inversedBy: 'recipes')]
-    private Collection $foods;
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: FoodRecipeNotInRefrigerator::class, cascade: ['remove'])]
+    private Collection $foodRecipeNotInRefrigerators;
+
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: FoodRecipeInRefrigerator::class, cascade: ['remove'])]
+    private Collection $foodRecipeInRefrigerators;
 
     public function __construct()
     {
-        $this->foods = new ArrayCollection();
+        $this->foodRecipeNotInRefrigerators = new ArrayCollection();
+        $this->foodRecipeInRefrigerators = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -89,27 +93,62 @@ class Recipe
 
         return $this;
     }
-
     /**
-     * @return Collection<int, Food>
+     * @return Collection<int, FoodRecipeNotInRefrigerator>
      */
-    public function getFoods(): Collection
+    public function getFoodRecipeNotInRefrigerators(): Collection
     {
-        return $this->foods;
+        return $this->foodRecipeNotInRefrigerators;
     }
 
-    public function addFood(Food $food): static
+    public function addFoodRecipeNotInRefrigerator(FoodRecipeNotInRefrigerator $foodNotInRefrigerator): static
     {
-        if (!$this->foods->contains($food)) {
-            $this->foods->add($food);
+        if (!$this->foodRecipeNotInRefrigerators->contains($foodNotInRefrigerator)) {
+            $this->foodRecipeNotInRefrigerators->add($foodNotInRefrigerator);
+            $foodNotInRefrigerator->setRecipe($this);
         }
 
         return $this;
     }
 
-    public function removeFood(Food $food): static
+    public function removeFoodRecipeNotInRefrigerator(FoodRecipeNotInRefrigerator $foodNotInRefrigerator): static
     {
-        $this->foods->removeElement($food);
+        if ($this->foodRecipeNotInRefrigerators->removeElement($foodNotInRefrigerator)) {
+            // set the owning side to null (unless already changed)
+            if ($foodNotInRefrigerator->getRecipe() === $this) {
+                $foodNotInRefrigerator->setRecipe(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FoodRecipeInRefrigerator>
+     */
+    public function getFoodRecipeInRefrigerators(): Collection
+    {
+        return $this->foodRecipeInRefrigerators;
+    }
+
+    public function addFoodRecipeInRefrigerator(FoodRecipeInRefrigerator $foodRecipeInRefrigerator): static
+    {
+        if (!$this->foodRecipeInRefrigerators->contains($foodRecipeInRefrigerator)) {
+            $this->foodRecipeInRefrigerators->add($foodRecipeInRefrigerator);
+            $foodRecipeInRefrigerator->setRecipe($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFoodRecipeInRefrigerator(FoodRecipeInRefrigerator $foodRecipeInRefrigerator): static
+    {
+        if ($this->foodRecipeInRefrigerators->removeElement($foodRecipeInRefrigerator)) {
+            // set the owning side to null (unless already changed)
+            if ($foodRecipeInRefrigerator->getRecipe() === $this) {
+                $foodRecipeInRefrigerator->setRecipe(null);
+            }
+        }
 
         return $this;
     }
