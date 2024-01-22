@@ -23,7 +23,7 @@
                     <li class="grid grid-cols-2 mt-7 mb-4 gap-4">
                         <p>
                             {% if ingredient.refrigerator is defined %}
-                                {{ ingredient.quantity }} {{ ingredient.food.name }}  <span class="badge badge-info text-white">=> Dans le frigo</span>
+                                {{ ingredient.quantity }} {{ ingredient.food.name }}  <span class="badge badge-info text-white">=> Dans le frigo {{ ingredient.refrigerator.name }}</span>
                             {% else %}
                                 {{ ingredient.quantity }} {% if ingredient.unit is defined %}{{ ingredient.unit }}{% endif %} {{ ingredient.name }}
                             {% endif %}
@@ -52,13 +52,25 @@
             <button class="bg-primary rounded-2xl text-white p-2">+ AJOUTER UN INGREDIENT</button>
         </a>
     </div>
-    <div class="text-center flex justify-center mt-56">
-        <a href="#" onclick="_modify_modal_id.showModal()" class="btn btn-warning text-white m-5">MODIFIER {{ recipe.name }}</a>
-        <a href="#" onclick="_remove_modal_id.showModal()" class="btn btn-error text-white m-5">SUPPRIMER {{ recipe.name }}</a>
+    <div class="text-center flex justify-center mt-24">
+        <a href="#" onclick="coming_soon.showModal()" class="btn bg-yellow-400 text-white m-5">CUISINER</a>
+    </div>
+    <div class="text-center flex justify-center mt-24">
+        <a href="#" onclick="_modify_modal_id.showModal()" class="btn btn-warning text-white m-5">MODIFIER</a>
+        <a href="#" onclick="_remove_modal_id.showModal()" class="btn btn-error text-white m-5">SUPPRIMER</a>
     </div>
     <div class="text-center flex justify-center mt-5">
         <a href="{{ path('app_main') }}" class="btn btn-info text-white"><< RETOUR</a>
     </div>
+
+    <dialog id="coming_soon" class="modal">
+        <div class="modal-box bg-white">
+            <h3 class="font-bold text-xl">{{ user.firstname }}, cette action est bientôt disponible...</b></h3>
+            <div class="flex justify-center mt-2">
+                <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white text-center">FERMER</a>
+            </div>
+        </div>
+    </dialog>
 
     <dialog id="_modify_modal_id" class="modal">
         <div class="modal-box bg-white">
@@ -93,7 +105,7 @@
         <dialog id="_remove_{{ food.id }}" class="modal">
             <div class="modal-box">
                 <h3 class="font-bold text-lg">Supprimer un aliment</h3>
-                <p class="py-4">Voulez-vous vraiment <b class="underline">supprimer</b> l'aliment <b class="font-bold capitalize">{{ food.name }}</b> dans la recette <b class="font-bold capitalize">{{ recipe.name }}</b> ?</p>
+                <p class="py-4">Voulez-vous vraiment <b class="underline">supprimer</b> l'aliment <b class="font-bold capitalize">{% if food.refrigerator is defined %}{{ food.food.name }}{% else %}{{ food.name }}{% endif %}</b> dans la recette <b class="font-bold capitalize">{{ recipe.name }}</b> ?</p>
                 <div class="modal-action">
                     <form method="post" action="{{ path('app_recipe_food_remove',{'number':number,'id':food.id}) }}">
                         <input hidden="" name="_remove_{{ food.id }}_token" value="{{ csrf_token('_remove_food_recipe_token_value') }}">
@@ -110,13 +122,13 @@
                 <div class="modal-action text-left flex justify-center">
                     <form action="{{ path('app_recipe_food_modify',{'number':number,'id':food.id}) }}" method="post">
                         <label for="quantity">Quantité :
-                            <input type="number" name="quantity" class="input border-gray-500 bg-white text-black" placeholder="1" required>
+                            <input type="number" name="quantity" class="input border-gray-500 bg-white text-black mb-2" placeholder="1" required>
                         </label><br>
                         <label for="unit">Unité :
-                            <input type="text" name="unit" class="input border-gray-500 bg-white text-black" placeholder="litre" required>
+                            <input type="text" name="unit" class="input border-gray-500 bg-white text-black mb-2" placeholder="litre">
                         </label><br>
                         <label for="name">Nom :
-                            <input type="text" name="name" class="input border-gray-500 bg-white text-black" placeholder="Lait" required>
+                            <input type="text" name="name" class="input border-gray-500 bg-white text-black mb-2" placeholder="Lait" required>
                         </label><br>
                         <input hidden="" name="_modify_{{ food.id }}_token" value="{{ csrf_token('_modify_food_recipe_token_value') }}"><br>
                         <div class="flex justify-center text-center">

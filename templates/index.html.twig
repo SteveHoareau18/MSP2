@@ -78,7 +78,7 @@
                 <p>Vous n'avez pas de frigo, donc pas d'aliments !</p>
             </div>
         {% endif %}
-        <div class="text-center flex justify-around p-4" style="background-image: url('{{ asset('img/food-background-wallpaper-19.jpg') }}');background-size: cover;">
+        <div class="text-center flex justify-around p-4" style="background-image: url('{{ asset('img/IMG_2619.jpg') }}');background-size: cover;">
             {% if user.refrigerators|length < 3 %}
                 {% set number = 0 %}
                 {% for refrigerator in user.refrigerators %}
@@ -106,6 +106,7 @@
                 <p>Vous n'avez pas de recettes :'(</p>
             </div>
         {% endif %}
+        <div class="w-full" style="background-image: url('{{ asset('img/IMG_2620.png') }}');background-size: cover;">
         <div class="text-center flex justify-center">
                 {% set number = 0 %}
             <div class="grid grid-cols-4 gap-4 m-2">
@@ -128,6 +129,7 @@
                     <span class="badge badge-error text-white">Vous ne pouvez pas rajouter plus de 10 recettes.</span>
                 {% endif %}
             </div>
+        </div>
         </div>
     {% endif %}
     {% set number = 1 %}
