@@ -104,45 +104,46 @@ class MainController extends AbstractController
         if(!$request->request->has('token') && !$request->request->has('_send_email_token')) {
             return $this->render("recovery-password.html.twig",['email'=>$request->query->get('email')]);
         }//SEND EMAIL TO GET A TOKEN
+        //TODO dev
 
-        if($request->request->has('email') && $this->isCsrfTokenValid('_send_email_token_value',$request->request->get('_send_email_token'))){
-            if($entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$request->request->get('email')]) != null){
-                $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$request->request->get('email')]);
-                $loader = new FilesystemLoader('email-template');
-                $twigEnv = new Environment($loader);
-                $twigBodyRenderer = new BodyRenderer($twigEnv);
-                $legacyToken = new EmailToken();
-                $legacyToken->setFreshUser($user);
-                $legacyToken->setSendDate(new \DateTime("now"));
-                $expireDate = $legacyToken->getSendDate();
-                $expireDate->add(new \DateInterval('PT1H')); // PT1H represents a period of 1 hour
-                $legacyToken->setExpireDate($expireDate);
-                $legacyToken->setToken(Ulid::generate($legacyToken->getSendDate()));
-                $entityManager->persist($legacyToken);
-                $entityManager->flush();
+        // if($request->request->has('email') && $this->isCsrfTokenValid('_send_email_token_value',$request->request->get('_send_email_token'))){
+        //     if($entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$request->request->get('email')]) != null){
+        //         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email'=>$request->request->get('email')]);
+        //         $loader = new FilesystemLoader('email-template');
+        //         $twigEnv = new Environment($loader);
+        //         $twigBodyRenderer = new BodyRenderer($twigEnv);
+        //         $legacyToken = new EmailToken();
+        //         $legacyToken->setFreshUser($user);
+        //         $legacyToken->setSendDate(new \DateTime("now"));
+        //         $expireDate = $legacyToken->getSendDate();
+        //         $expireDate->add(new \DateInterval('PT1H')); // PT1H represents a period of 1 hour
+        //         $legacyToken->setExpireDate($expireDate);
+        //         $legacyToken->setToken(Ulid::generate($legacyToken->getSendDate()));
+        //         $entityManager->persist($legacyToken);
+        //         $entityManager->flush();
 
-                $timestamp = $legacyToken->getSendDate()->format('dmYHis').$user->getId().$user->getRegisterDate()->format("dmYHis");
-                $email = (new TemplatedEmail())
-                    ->from(new Address('no-reply@fresh.app', 'Fresh Support !'))
-                    ->to($user->getEmail())
-                    ->subject('Votre demande de changement de mot de passe')
-                    ->htmlTemplate('recovery_password_email.html.twig')
-                    ->context(['user'=>$user,'url' => $this->generateUrl('app_change_password', [], UrlGeneratorInterface::ABSOLUTE_URL), 'timestamp' => $timestamp, 'key'=>$legacyToken->getId()]);
-                $twigBodyRenderer->render($email);
-                $this->emailVerifier->send('app_recovery_password', $user,
-                    $email
-                );
-                $entityManager->persist($user);
-                $entityManager->flush();
-                $this->addFlash('success', 'Un email contenant un lien (de no-reply@fresh.app) vous a été envoyé pour que vous modifiez votre mot de passe');
-            }else{
-                $this->addFlash('error', 'Cette email est introuvable dans notre base de données!');
-                return $this->redirectToRoute('app_register');
-            }
-        }else{
-            $this->addFlash('error', 'Une erreur est survenue, merci de re-essayer...');
-            return $this->redirectToRoute('app_recovery_password',['email'=>$request->request->get('email')]);
-        }
+        //         $timestamp = $legacyToken->getSendDate()->format('dmYHis').$user->getId().$user->getRegisterDate()->format("dmYHis");
+        //         $email = (new TemplatedEmail())
+        //             ->from(new Address('no-reply@fresh.app', 'Fresh Support !'))
+        //             ->to($user->getEmail())
+        //             ->subject('Votre demande de changement de mot de passe')
+        //             ->htmlTemplate('recovery_password_email.html.twig')
+        //             ->context(['user'=>$user,'url' => $this->generateUrl('app_change_password', [], UrlGeneratorInterface::ABSOLUTE_URL), 'timestamp' => $timestamp, 'key'=>$legacyToken->getId()]);
+        //         $twigBodyRenderer->render($email);
+        //         $this->emailVerifier->send('app_recovery_password', $user,
+        //             $email
+        //         );
+        //         $entityManager->persist($user);
+        //         $entityManager->flush();
+        //         $this->addFlash('success', 'Un email contenant un lien (de no-reply@fresh.app) vous a été envoyé pour que vous modifiez votre mot de passe');
+        //     }else{
+        //         $this->addFlash('error', 'Cette email est introuvable dans notre base de données!');
+        //         return $this->redirectToRoute('app_register');
+        //     }
+        // }else{
+        //     $this->addFlash('error', 'Une erreur est survenue, merci de re-essayer...');
+        //     return $this->redirectToRoute('app_recovery_password',['email'=>$request->request->get('email')]);
+        // }
         return $this->redirectToRoute('app_login');
     }
 

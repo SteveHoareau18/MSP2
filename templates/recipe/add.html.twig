@@ -36,7 +36,7 @@
                     - {{ foodRecipe.quantity }} {{ foodRecipe.unit }}
                     {% if foodRecipe.food is defined %}
                         {{ foodRecipe.food.name }}
-                        <span class="badge bg-info text-white">Dans le frigo {{ foodRecipe.food.refrigirator.name }}</span>
+                        <span class="badge bg-info text-white">Dans le frigo {{ foodRecipe.food.refrigerator.name }}</span>
                     {% else %}
                         {{ foodRecipe.name }}
                     {% endif %}

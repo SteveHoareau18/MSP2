@@ -115,26 +115,23 @@
                 </div>
             </div>
         </dialog>
-
-        <dialog id="_modify_{{ food.id }}" class="modal">
+    {% endfor %}
+    {% for i in 0..foodFormArr|length-1 %}
+        {% set id = foodFormArr[i] %}
+        <dialog id="_modify_{{ id }}" class="modal">
             <div class="modal-box bg-white">
-                <h3 class="font-bold text-lg text-center">Modifier un aliment</h3>
+                <h3 class="font-bold text-lg text-center">Modifier un aliment dans la recette {{recipe.name}}</h3>
                 <div class="modal-action text-left flex justify-center">
-                    <form action="{{ path('app_recipe_food_modify',{'number':number,'id':food.id}) }}" method="post">
-                        <label for="quantity">Quantité :
-                            <input type="number" name="quantity" class="input border-gray-500 bg-white text-black mb-2" placeholder="1" required>
-                        </label><br>
-                        <label for="unit">Unité :
-                            <input type="text" name="unit" class="input border-gray-500 bg-white text-black mb-2" placeholder="litre">
-                        </label><br>
-                        <label for="name">Nom :
-                            <input type="text" name="name" class="input border-gray-500 bg-white text-black mb-2" placeholder="Lait" required>
-                        </label><br>
-                        <input hidden="" name="_modify_{{ food.id }}_token" value="{{ csrf_token('_modify_food_recipe_token_value') }}"><br>
-                        <div class="flex justify-center text-center">
-                            <button type="submit" class="btn btn-warning text-white">METTRE A JOUR</button>
-                        </div>
-                    </form>
+                    {% set form = legacyFoodFormArr[i].createView %}
+                    {{ form_start(form, {'action':path('app_recipe_food_modify',{'number':number,'id':id})}) }}
+                    <input hidden="" name="_modify_{{ id }}_token" value="{{ csrf_token('_modify_food_recipe_token_value') }}">
+                    {{ form_row(form.quantity) }}
+                    {{ form_row(form.unit) }}
+                    {{ form_row(form.name) }}
+                    <div class="flex justify-center">
+                        {{ form_row(form.submit, {'label': 'METTRE A JOUR','attr':{'class':'btn btn-warning text-white mt-5'}}) }}
+                    </div>
+                    {{ form_end(form) }}
                 </div>
                 <div class="flex justify-center mt-2">
                     <a href="{{ path('app_recipe',{'number':number}) }}" class="btn btn-info text-white text-center">FERMER</a>

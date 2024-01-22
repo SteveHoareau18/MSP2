@@ -9,6 +9,7 @@ use App\Entity\FreshUser;
 use App\Entity\Recipe;
 use App\Entity\Refrigerator;
 use App\Form\FoodFormType;
+use App\Form\FoodRecipeNotInRefrigeratorFormType;
 use App\Form\RecipeFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -53,13 +54,25 @@ class RecipeController extends AbstractController
                         if(strtoupper($food->getName()) == strtoupper($foodNotInRefrigerator->getName())){
                             $b=true;
                             $recipe->removeFoodRecipeNotInRefrigerator($foodNotInRefrigerator);
-                            $foodInRefrigerator = new FoodRecipeInRefrigerator();
-                            $foodInRefrigerator->setFood($food);
-                            $foodInRefrigerator->setQuantity($foodNotInRefrigerator->getQuantity());
-                            $foodInRefrigerator->setUnit($foodNotInRefrigerator->getUnit());
-                            $foodInRefrigerator->setRefrigerator($refrigerator);
-                            $recipe->addFoodRecipeInRefrigerator($foodInRefrigerator);
-                            $entityManager->persist($foodInRefrigerator);
+                            if($entityManager->getRepository(FoodRecipeInRefrigerator::class)->findOneBy(['food'=>$food]) == null){
+                                $foodInRefrigerator = new FoodRecipeInRefrigerator();
+                                $foodInRefrigerator->setFood($food);
+                                $foodInRefrigerator->setQuantity($foodNotInRefrigerator->getQuantity());
+                                $foodInRefrigerator->setUnit($foodNotInRefrigerator->getUnit());
+                                $foodInRefrigerator->setRefrigerator($refrigerator);
+                                $recipe->addFoodRecipeInRefrigerator($foodInRefrigerator);
+                                $entityManager->persist($foodInRefrigerator);
+                                $entityManager->flush();
+                            }else{
+                                $foodInRefrigerator = $entityManager->getRepository(FoodRecipeInRefrigerator::class)->findOneBy(['food'=>$food]);
+                                $foodInRefrigerator->setFood($food);
+                                $foodInRefrigerator->setQuantity($foodNotInRefrigerator->getQuantity());
+                                $foodInRefrigerator->setUnit($foodNotInRefrigerator->getUnit());
+                                $foodInRefrigerator->setRefrigerator($refrigerator);
+                                $entityManager->persist($foodInRefrigerator);
+                                $entityManager->flush();
+                            }
+                            $entityManager->persist($recipe);
                             $entityManager->remove($foodNotInRefrigerator);
                             $entityManager->flush();
                             continue;
@@ -77,12 +90,40 @@ class RecipeController extends AbstractController
 
             $recipeForm = $this->createForm(RecipeFormType::class,$recipe);
             $recipeForm->handleRequest($request);
+            $foodFormArr = array();
+            $legacyFoodFormArr = array();
+            $i = 0;
+            foreach ($recipe->getFoodRecipeNotInRefrigerators() as $foodRecipeNotInRefrigerator) {
+                $foodRecipeNotInRefrigerator->setRecipe($recipe);
+                $foodFormArr[$i] = $foodRecipeNotInRefrigerator->getId();
+                $foodForm = $this->createForm(FoodRecipeNotInRefrigeratorFormType::class, $foodRecipeNotInRefrigerator);
+                $foodForm->handleRequest($request);
+                $legacyFoodFormArr[$i] = $foodForm;
+                $i+=1;
+            }
+
+            foreach ($recipe->getFoodRecipeInRefrigerators() as $foodInRefrigerator) {
+                $foodNotInRefrigerator = new FoodRecipeNotInRefrigerator();
+                $foodNotInRefrigerator->setRecipe($recipe);
+                $foodNotInRefrigerator->setName($foodInRefrigerator->getFood()->getName());
+                $foodNotInRefrigerator->setQuantity($foodInRefrigerator->getQuantity());
+                $foodNotInRefrigerator->getUnit($foodInRefrigerator->getUnit());
+                $foodNotInRefrigerator->setCanBeRegroup(false);
+                $foodForm = $this->createForm(FoodRecipeNotInRefrigeratorFormType::class, $foodNotInRefrigerator);
+                $foodForm->handleRequest($request);
+                $foodFormArr[$i] = $foodInRefrigerator->getId();
+                $legacyFoodFormArr[$i] = $foodForm;
+                $i+=1;
+            }
+            $this->addFlash('warning','Des aliments de votre recettes ont le même nom, la fonctionnalité d\'identification des aliments n\'est pas encore disponible. Vous devez supprimer les doublons à la main !');
             return $this->render('recipe/index.html.twig', [
                 'recipe' => $recipe,
                 'number' => $number,
                 'user' => $user,
                 'ingredients'=>$ingredients,
-                'recipeForm'=>$recipeForm
+                'recipeForm'=>$recipeForm,
+                'foodFormArr'=>$foodFormArr,
+                'legacyFoodFormArr'=>$legacyFoodFormArr,
             ]);
         } else {
             return $this->redirectToRoute("app_main");
@@ -103,19 +144,24 @@ class RecipeController extends AbstractController
             $this->addFlash("error",'Une erreur est survenue...');
             return $this->redirectToRoute("app_main");
         }
-        $foodRecipe = $entityManager->getRepository(FoodRecipeInRefrigerator::class)->find($id);
+        $foodRecipe = $entityManager->getRepository(FoodRecipeInRefrigerator::class)->find($id);//FoodRecipeInRefrigerator
+        $inRefrigerator = false;
         if ($foodRecipe == null) {
-            $foodRecipe = $entityManager->getRepository(FoodRecipeNotInRefrigerator::class)->find($id);
-            if($foodRecipe == null) return $this->redirectToRoute("app_recipe", ["number" => 1]);
-        }
-
-        if($foodRecipe->getRecipe()->getId() != $recipe->getId()){
-            $this->addFlash("error",'Une erreur est survenue...');
-            return $this->redirectToRoute("app_main");
+            $foodRecipe = $entityManager->getRepository(FoodRecipeNotInRefrigerator::class)->find($id);//FoodRecipeNotInRefrigerator NOT
+            if($foodRecipe == null || $foodRecipe->getRecipe()->getId() != $recipe->getId()) {
+                $this->addFlash("error",'Une erreur est survenue...');
+                return $this->redirectToRoute("app_recipe", ["number" => 1]); //null or not same owner
+            }
+        }else{//FoodRecipeInRefrigerator
+            if($foodRecipe->getRecipe()->getId() != $recipe->getId()) {
+                $this->addFlash("error",'Une erreur est survenue...');
+                return $this->redirectToRoute("app_recipe", ["number" => 1]); //null or not same owner
+            }
+            $inRefrigerator = true;
         }
 
         if ($request->request->has('_remove_' . $id . '_token') && $this->isCsrfTokenValid('_remove_food_recipe_token_value', $request->request->get('_remove_' . $id . '_token'))) {
-            $name = $foodRecipe->getName();
+            $name = $inRefrigerator?$foodRecipe->getFood()->getName():$foodRecipe->getName();
             $entityManager->remove($foodRecipe);
             $entityManager->flush();
             $this->addFlash('success', "L'aliment " . $name . " a été enlevé dans la recette ".$recipe->getName()." !");
@@ -127,7 +173,7 @@ class RecipeController extends AbstractController
 
     #[Route('/recipe/{number}/food/modify/{id}', name: 'app_recipe_food_modify')]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
-    public function modifyFoodInRefrigirator(Request $request, EntityManagerInterface $entityManager, $number, $id): Response
+    public function modifyFoodInRecipe(Request $request, EntityManagerInterface $entityManager, $number, $id): Response
     {
         $user = $entityManager->getRepository(FreshUser::class)->findOneBy(['email' => $this->getUser()->getUserIdentifier()]);
         $recipes = $entityManager->getRepository(Recipe::class)->findBy(['owner' => $user->getId()]);
@@ -140,24 +186,40 @@ class RecipeController extends AbstractController
             $this->addFlash("error",'Une erreur est survenue...');
             return $this->redirectToRoute("app_main");
         }
-        $foodRecipe = $entityManager->getRepository(FoodRecipeInRefrigerator::class)->find($id);
+        $foodRecipe = $entityManager->getRepository(FoodRecipeInRefrigerator::class)->find($id);//FoodRecipeInRefrigerator
+        $inRefrigerator = false;
         if ($foodRecipe == null) {
-            $foodRecipe = $entityManager->getRepository(FoodRecipeNotInRefrigerator::class)->find($id);
-            if($foodRecipe == null) return $this->redirectToRoute("app_recipe", ["number" => 1]);
+            $foodRecipe = $entityManager->getRepository(FoodRecipeNotInRefrigerator::class)->find($id);//FoodRecipeNotInRefrigerator NOT
+            if($foodRecipe == null || $foodRecipe->getRecipe()->getId() != $recipe->getId()) {
+                $this->addFlash("error",'Une erreur est survenue...');
+                return $this->redirectToRoute("app_recipe", ["number" => 1]); //null or not same owner
+            }
+        }else{//FoodRecipeInRefrigerator
+            if($foodRecipe->getRecipe()->getId() != $recipe->getId()) {
+                $this->addFlash("error",'Une erreur est survenue...');
+                return $this->redirectToRoute("app_recipe", ["number" => 1]); //null or not same owner
+            }
+            $inRefrigerator = true;
         }
-
-        if($foodRecipe->getRecipe()->getId() != $recipe->getId()){
-            $this->addFlash("error",'Une erreur est survenue...');
-            return $this->redirectToRoute("app_main");
+        if($inRefrigerator){
+            $legacyFoodRecipeNotInRefrigerator = new FoodRecipeNotInRefrigerator();
+        }else{
+            $legacyFoodRecipeNotInRefrigerator = $foodRecipe;
         }
-
+        $legacyFoodRecipeNotInRefrigerator->setRecipe($recipe);
+        $foodRecipeForm = $this->createForm(FoodRecipeNotInRefrigeratorFormType::class,$legacyFoodRecipeNotInRefrigerator);
+        $foodRecipeForm->handleRequest($request);
 
         if ($request->request->has('_modify_' . $id . '_token') && $this->isCsrfTokenValid('_modify_food_recipe_token_value', $request->request->get('_modify_' . $id . '_token'))) {
-            $name = $foodRecipe->getName();
-            $entityManager->remove($foodRecipe);
-            $entityManager->flush();
-            $this->addFlash('success', "L'aliment " . $name . " a été enlevé dans la recette ".$recipe->getName()." !");
+            $name = $inRefrigerator?$foodRecipe->getFood()->getName():$foodRecipe->getName();
+            if($foodRecipeForm->isSubmitted() && $foodRecipeForm->isValid()){
+                if($inRefrigerator) $entityManager->remove($foodRecipe);
+                $entityManager->persist($legacyFoodRecipeNotInRefrigerator);
+                $entityManager->flush();
+                $this->addFlash('success', "L'aliment " . $name . " a été modifié dans la recette ".$recipe->getName()." !");
+            }
         } else {
+            dd($request,"error",$request->request->has('_modify_' . $id . '_token'));
             $this->addFlash('error', "Une erreur est survenue, merci de re-essayer...");
         }
         return $this->redirectToRoute("app_recipe", ['number' => $number]);

@@ -14,7 +14,7 @@ class FoodRecipeInRefrigerator
     private ?int $id = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, unique: false)]
     private ?Refrigerator $refrigerator = null;
 
     #[ORM\Column]
