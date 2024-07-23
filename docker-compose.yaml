@@ -1,0 +1,70 @@
+services:
+  web:
+    image: webdevops/php-nginx:8.2
+    container_name: symfony_app
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    expose:
+      - "9000"
+    environment:
+      - PHP_DISPLAY_ERRORS=1
+      - WEB_DOCUMENT_ROOT=/var/www/html/public
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: symfony_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fresh_db
+      MYSQL_USER: symfony
+      MYSQL_PASSWORD: DzPO852aKnMgsSB
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+
+  backup:
+    image: mysql:8.0
+    container_name: db_backup
+    volumes:
+      - db_backup:/backup
+      - ./scripts:/scripts
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_USER: symfony
+      MYSQL_PASSWORD: DzPO852aKnMgsSB
+      MYSQL_DATABASE: fresh_db
+    entrypoint: ["bash", "-c", "while true; do /scripts/backup.sh; sleep 3600; done"]
+
+volumes:
+  db_data:
+  jenkins_home:
+  db_backup:
